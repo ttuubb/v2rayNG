@@ -1,0 +1,69 @@
+name: Build V2Ray Windows Libraries
+
+on:
+  workflow_dispatch:  # 允许手动触发
+  push:
+    branches: [ main ]
+    paths:
+      - 'v2ray-core/**'  # 当 v2ray-core 目录有变化时触发
+  schedule:
+    - cron: '0 0 * * 0'  # 每周日自动构建一次
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'  # 使用适合 v2ray-core 的 Go 版本
+      
+      - name: Get V2Ray Core Source
+        run: |
+          git clone https://github.com/v2fly/v2ray-core.git
+          cd v2ray-core
+          git checkout v5.7.0  # 指定版本，可以根据需要修改
+      
+      - name: Build V2Ray Core DLL
+        run: |
+          cd v2ray-core
+          go env -w CGO_ENABLED=1
+          go env -w GOOS=windows
+          
+          # 为 x86 构建
+          go env -w GOARCH=386
+          go build -o ..\v2ray_x86.dll -buildmode=c-shared ./main
+          
+          # 为 x64 构建
+          go env -w GOARCH=amd64
+          go build -o ..\v2ray_x64.dll -buildmode=c-shared ./main
+          
+          # 为 ARM64 构建 (如果需要)
+          go env -w GOARCH=arm64
+          go build -o ..\v2ray_arm64.dll -buildmode=c-shared ./main
+      
+      - name: Upload Windows Libraries
+        uses: actions/upload-artifact@v3
+        with:
+          name: v2ray-windows-libs
+          path: |
+            v2ray_x86.dll
+            v2ray_x64.dll
+            v2ray_arm64.dll
+      
+      - name: Create Release
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v2ray-libs-${{ github.run_number }}
+          name: V2Ray Windows Libraries ${{ github.run_number }}
+          files: |
+            v2ray_x86.dll
+            v2ray_x64.dll
+            v2ray_arm64.dll
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
