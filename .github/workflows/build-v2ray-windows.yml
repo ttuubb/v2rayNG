@@ -54,11 +54,21 @@ jobs:
       # 安装依赖工具并初始化 gomobile
       - name: Install Dependencies and Init Gomobile
         run: |
+          # 设置 GOPATH
+          echo "GOPATH=$HOME/go" >> $GITHUB_ENV
+          echo "$HOME/go/bin" >> $GITHUB_PATH
+          
+          # 安装必要的依赖包
+          go get -d golang.org/x/mobile/cmd/gomobile
+          go get -d golang.org/x/mobile/bind
+          
           # 使用 go install 安装 gomobile 和相关工具
           go install golang.org/x/mobile/cmd/gomobile@latest
           go install golang.org/x/tools/cmd/goimports@latest
+          
           # 初始化 gomobile，确保所有工具链可用
           gomobile init
+          
           # 验证 gomobile 安装
           gomobile version
         env:
