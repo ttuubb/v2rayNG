@@ -2,23 +2,46 @@ import 'package:flutter/foundation.dart';
 import '../models/server_config.dart';
 import '../models/repositories/server_repository.dart';
 
+/// 服务器列表视图模型类
+/// 用于管理和展示V2Ray服务器列表，支持服务器的增删改查和连接状态管理
 class ServerListViewModel extends ChangeNotifier {
   final ServerRepository _repository;
   
+  /// 服务器配置列表
   List<ServerConfig> _servers = [];
+  
+  /// 是否正在加载数据
   bool _isLoading = false;
+  
+  /// 错误信息
   String? _error;
+  
+  /// 当前选中的服务器
   ServerConfig? _currentServer;
+  
+  /// 是否已连接到服务器
   bool _isConnected = false;
   
+  /// 构造函数
+  /// [_repository] 服务器仓库实例
   ServerListViewModel(this._repository);
   
+  /// 获取服务器列表
   List<ServerConfig> get servers => _servers;
+  
+  /// 获取加载状态
   bool get isLoading => _isLoading;
+  
+  /// 获取错误信息
   String? get error => _error;
+  
+  /// 获取当前选中的服务器
   ServerConfig? get currentServer => _currentServer;
+  
+  /// 获取连接状态
   bool get isConnected => _isConnected;
   
+  /// 加载所有服务器配置
   Future<void> loadServers() async {
     _isLoading = true;
     _error = null;
@@ -34,7 +57,8 @@ class ServerListViewModel extends ChangeNotifier {
     }
   }
   
-  // 添加服务器
+  /// 添加新服务器
+  /// [server] 要添加的服务器配置
   Future<void> addServer(ServerConfig server) async {
     try {
       await _repository.addServer(server);

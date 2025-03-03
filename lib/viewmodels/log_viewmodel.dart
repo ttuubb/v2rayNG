@@ -3,17 +3,30 @@ import 'package:flutter/foundation.dart';
 import '../core/services/log_service.dart';
 import '../core/event_bus.dart';
 
+/// 日志视图模型类
+/// 用于管理和展示应用程序的日志数据，支持日志过滤和实时更新
 class LogViewModel extends ChangeNotifier {
   final LogService _logService;
   final EventBus _eventBus;
   StreamSubscription? _logSubscription;
   
+  /// 存储日志条目列表
   List<LogEntry> _logs = [];
+  
+  /// 是否正在加载数据
   bool _isLoading = false;
+  
+  /// 错误信息
   String? _error;
+  
+  /// 日志级别过滤器
   LogLevel _filterLevel = LogLevel.debug;
+  
+  /// 日志标签过滤器
   String? _filterTag;
   
+  /// 构造函数
+  /// 初始化日志服务和事件总线，并设置日志更新和清除的事件监听
   LogViewModel(this._logService, this._eventBus) {
     // 订阅日志更新事件
     _logSubscription = _logService.logStream.listen((entry) {
@@ -30,14 +43,23 @@ class LogViewModel extends ChangeNotifier {
     });
   }
   
-  // Getters
+  /// 获取日志列表
   List<LogEntry> get logs => _logs;
+  
+  /// 获取加载状态
   bool get isLoading => _isLoading;
+  
+  /// 获取错误信息
   String? get error => _error;
+  
+  /// 获取当前日志级别过滤器
   LogLevel get filterLevel => _filterLevel;
+  
+  /// 获取当前标签过滤器
   String? get filterTag => _filterTag;
   
-  // 加载日志
+  /// 加载日志数据
+  /// 从日志服务获取所有日志并应用当前的过滤器
   Future<void> loadLogs() async {
     _isLoading = true;
     _error = null;

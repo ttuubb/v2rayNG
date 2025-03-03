@@ -6,15 +6,27 @@ import '../models/traffic_history.dart';
 import '../core/services/traffic_service.dart';
 import '../models/traffic_stats.dart';
 
+/// 流量监控视图模型
+/// 
+/// 负责管理和展示实时流量统计数据以及历史流量记录
+/// 通过事件总线接收流量更新事件，并通知UI更新显示
 class TrafficViewModel extends ChangeNotifier {
+  /// 流量服务实例，用于获取流量数据
   final TrafficService _trafficService;
+  /// 事件总线实例，用于接收流量更新事件
   final EventBus _eventBus;
+  /// 事件订阅对象
   StreamSubscription? _subscription;
   
+  /// 当前流量统计数据
   TrafficStats? _currentStats;
+  /// 历史流量记录列表
   List<TrafficHistory> _history = [];
+  /// 是否正在加载数据
   bool _isLoading = false;
+  /// 错误信息
   String? _error;
+  /// 当前监控的服务器ID
   String? _monitoringServerId;
   
   TrafficViewModel(this._trafficService, this._eventBus) {
@@ -40,12 +52,19 @@ class TrafficViewModel extends ChangeNotifier {
     );
   }
   
+  /// 获取当前流量统计数据
   TrafficStats? get currentStats => _currentStats;
+  /// 获取历史流量记录列表
   List<TrafficHistory> get history => _history;
+  /// 获取加载状态
   bool get isLoading => _isLoading;
+  /// 获取错误信息
   String? get error => _error;
-
-  // 开始监控指定服务器的流量
+  
+  /// 开始监控指定服务器的流量
+  /// 
+  /// [serverId] 要监控的服务器ID
+  /// 如果当前已在监控其他服务器，会先停止之前的监控
   void startMonitoring(String serverId) {
     if (_monitoringServerId != serverId) {
       stopMonitoring();
@@ -53,8 +72,10 @@ class TrafficViewModel extends ChangeNotifier {
       _trafficService.startMonitoring(serverId);
     }
   }
-
-  // 停止流量监控
+  
+  /// 停止流量监控
+  /// 
+  /// 取消事件订阅并清除当前监控的服务器ID
   void stopMonitoring() {
     if (_monitoringServerId != null) {
       _trafficService.stopMonitoring();
@@ -63,8 +84,12 @@ class TrafficViewModel extends ChangeNotifier {
     _subscription?.cancel();
     _subscription = null;
   }
-
-  // 加载历史流量数据
+  
+  /// 加载指定服务器的历史流量数据
+  /// 
+  /// [serverId] 服务器ID
+  /// 加载过程中会更新isLoading状态
+  /// 如果发生错误会设置error信息
   Future<void> loadTrafficHistory(String serverId) async {
     _isLoading = true;
     _error = null;
@@ -79,8 +104,12 @@ class TrafficViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
-
-  // 清除历史流量数据
+  
+  /// 清除指定服务器的历史流量数据
+  /// 
+  /// [serverId] 服务器ID
+  /// 清除成功后会更新本地历史记录列表
+  /// 如果发生错误会设置error信息
   Future<void> clearTrafficHistory(String serverId) async {
     try {
       await _trafficService.clearTrafficHistory(serverId);
@@ -91,11 +120,13 @@ class TrafficViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
-
-  // 保存流量历史记录
+  
+  /// 保存流量历史记录
+  /// 
+  /// [record] 要保存的流量记录
+  /// 将记录添加到本地列表并通知UI更新
   Future<void> saveTrafficHistory(TrafficHistory record) async {
     try {
-      // 直接添加到本地列表，不调用不存在的服务方法
       _history.add(record);
       notifyListeners();
     } catch (e) {
@@ -103,64 +134,10 @@ class TrafficViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
-
-  // 生成流量报告
-  Future<Map<String, dynamic>> generateTrafficReport(String serverId, DateTime startDate, DateTime endDate) async {
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      final serverHistory = _history.where((record) =>
-        record.serverId == serverId &&
-        record.startTime.isAfter(startDate) &&
-        record.endTime.isBefore(endDate)
-      ).toList();
-
-      final totalUpload = serverHistory.fold<int>(0, (sum, record) => sum + record.uploadTotal);
-      final totalDownload = serverHistory.fold<int>(0, (sum, record) => sum + record.downloadTotal);
-
-      return {
-        'serverId': serverId,
-        'startDate': startDate,
-        'endDate': endDate,
-        'totalUpload': totalUpload,
-        'totalDownload': totalDownload,
-        'recordCount': serverHistory.length
-      };
-    } catch (e) {
-      _error = e.toString();
-      return {};
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // 计算聚合流量数据
-  Future<Map<String, int>> calculateAggregateTraffic() async {
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      final totalUpload = _history.fold<int>(0, (sum, record) => sum + record.uploadTotal);
-      final totalDownload = _history.fold<int>(0, (sum, record) => sum + record.downloadTotal);
-
-      return {
-        'totalUpload': totalUpload,
-        'totalDownload': totalDownload
-      };
-    } catch (e) {
-      _error = e.toString();
-      return {};
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
+  
   @override
   void dispose() {
-    _subscription?.cancel();
+    stopMonitoring();
     super.dispose();
   }
 }

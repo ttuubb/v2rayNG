@@ -4,18 +4,22 @@ import '../viewmodels/server_list_viewmodel.dart';
 import '../models/server_config.dart';
 import 'package:v2rayng/views/server_detail_page.dart';
 
+/// 服务器列表页面
+/// 显示所有配置的代理服务器，支持添加、编辑、删除和启用/禁用服务器
+/// 使用Provider模式进行状态管理，通过ServerListViewModel处理服务器相关的业务逻辑
 class ServerListPage extends StatefulWidget {
   const ServerListPage({Key? key}) : super(key: key);
-
   @override
   State<ServerListPage> createState() => _ServerListPageState();
 }
 
+/// 服务器列表页面状态类
+/// 维护服务器列表的状态和用户交互逻辑
 class _ServerListPageState extends State<ServerListPage> {
   @override
   void initState() {
     super.initState();
-    // 加载服务器列表数据
+    // 在微任务队列中加载服务器列表数据，避免在构建过程中调用setState
     Future.microtask(() =>
         Provider.of<ServerListViewModel>(context, listen: false).loadServers());
   }
@@ -26,10 +30,10 @@ class _ServerListPageState extends State<ServerListPage> {
       appBar: AppBar(
         title: const Text('服务器列表'),
         actions: [
+          // 添加新服务器按钮
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
-              // 修复第35行左右的代码
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -40,20 +44,25 @@ class _ServerListPageState extends State<ServerListPage> {
           ),
         ],
       ),
+      // 使用Consumer监听ServerListViewModel的状态变化
       body: Consumer<ServerListViewModel>(
         builder: (context, viewModel, child) {
+          // 显示加载状态
           if (viewModel.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
+          // 显示错误信息
           if (viewModel.error != null) {
             return Center(child: Text('错误: ${viewModel.error}'));
           }
 
+          // 显示空状态
           if (viewModel.servers.isEmpty) {
             return const Center(child: Text('没有服务器配置，请添加新服务器'));
           }
 
+          // 使用ListView.builder高效构建服务器列表
           return ListView.builder(
             itemCount: viewModel.servers.length,
             itemBuilder: (context, index) {
@@ -62,7 +71,6 @@ class _ServerListPageState extends State<ServerListPage> {
                 server: server,
                 onToggle: () => viewModel.toggleServerStatus(server),
                 onEdit: () {
-                  // 修复第67行左右的代码
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -79,6 +87,8 @@ class _ServerListPageState extends State<ServerListPage> {
     );
   }
 
+  /// 显示删除确认对话框
+  /// 提示用户确认是否要删除选中的服务器
   void _showDeleteConfirmation(BuildContext context, ServerListViewModel viewModel, ServerConfig server) {
     showDialog(
       context: context,
@@ -103,10 +113,19 @@ class _ServerListPageState extends State<ServerListPage> {
   }
 }
 
+/// 服务器列表项组件
+/// 用于显示单个服务器的信息卡片，包含服务器状态、基本信息和操作按钮
 class ServerListItem extends StatelessWidget {
+  /// 服务器配置信息
   final ServerConfig server;
+  
+  /// 切换服务器启用状态的回调函数
   final VoidCallback onToggle;
+  
+  /// 编辑服务器配置的回调函数
   final VoidCallback onEdit;
+  
+  /// 删除服务器的回调函数
   final VoidCallback onDelete;
 
   const ServerListItem({

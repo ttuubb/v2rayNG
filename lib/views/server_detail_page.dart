@@ -3,28 +3,47 @@ import 'package:provider/provider.dart';
 import '../models/server_config.dart';
 import '../viewmodels/server_detail_viewmodel.dart';
 
+/// 服务器详情页面
+/// 用于添加新的服务器配置或编辑现有服务器配置
+/// 支持多种代理协议（如VMess、Shadowsocks等）的配置管理
 class ServerDetailPage extends StatefulWidget {
-  final ServerConfig? server; // 如果为null，则是添加新服务器
-
+  /// 当前编辑的服务器配置，如果为null则表示添加新服务器
+  final ServerConfig? server;
+  
   const ServerDetailPage({Key? key, this.server}) : super(key: key);
-
+  
   @override
   State<ServerDetailPage> createState() => _ServerDetailPageState();
 }
 
+/// 服务器详情页面状态类
+/// 维护表单状态和服务器配置数据
 class _ServerDetailPageState extends State<ServerDetailPage> {
+  /// 表单的全局键，用于验证表单数据
   final _formKey = GlobalKey<FormState>();
+  
+  /// 服务器名称输入控制器
   late TextEditingController _nameController;
+  
+  /// 服务器地址输入控制器
   late TextEditingController _addressController;
+  
+  /// 端口号输入控制器
   late TextEditingController _portController;
+  
+  /// 当前选择的代理协议
   String _selectedProtocol = 'vmess';
+  
+  /// 服务器是否启用
   bool _isEnabled = true;
+  
+  /// 协议特定的设置参数
   final Map<String, dynamic> _settings = {};
-
+  
   @override
   void initState() {
     super.initState();
-    // 如果是编辑模式，初始化表单数据
+    // 初始化表单数据，如果是编辑模式则填充现有数据
     if (widget.server != null) {
       _nameController = TextEditingController(text: widget.server!.name);
       _addressController = TextEditingController(text: widget.server!.address);
@@ -33,53 +52,56 @@ class _ServerDetailPageState extends State<ServerDetailPage> {
       _isEnabled = widget.server!.enabled;
       _settings.addAll(widget.server!.settings);
     } else {
+      // 新建模式下的默认值
       _nameController = TextEditingController();
       _addressController = TextEditingController();
       _portController = TextEditingController(text: '1080');
     }
   }
-
+  
   @override
   void dispose() {
+    // 释放控制器资源
     _nameController.dispose();
     _addressController.dispose();
     _portController.dispose();
     super.dispose();
   }
-
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      title: Text(widget.server == null ? '添加服务器' : '编辑服务器'),
-    ),
-    floatingActionButton: FloatingActionButton(
-      onPressed: _saveServer,
-      child: const Icon(Icons.save),
-    ),
-    body: Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Form( // 添加Form包裹
-        key: _formKey,
-        child: Column(
-          children: [
-            // 原有表单字段...
-            _buildProtocolSettings(),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _saveServer,
-              child: const Text('保存配置'),
-            ),
-          ],
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.server == null ? '添加服务器' : '编辑服务器'),
+      ),
+      // 添加悬浮保存按钮
+      floatingActionButton: FloatingActionButton(
+        onPressed: _saveServer,
+        child: const Icon(Icons.save),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              // 根据选择的协议类型显示对应的设置选项
+              _buildProtocolSettings(),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _saveServer,
+                child: const Text('保存配置'),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
-
+    );
+  }
+  
+  /// 构建协议特定的设置界面
+  /// 根据不同的协议类型返回对应的设置选项组件
   Widget _buildProtocolSettings() {
-    // 这里可以根据不同的协议类型显示不同的设置选项
-    // 简化版本，实际应用中可以扩展
     switch (_selectedProtocol) {
       case 'vmess':
         return _buildVMessSettings();
@@ -89,7 +111,8 @@ Widget build(BuildContext context) {
         return const SizedBox.shrink();
     }
   }
-
+  
+  /// 构建VMess协议的设置界面
   Widget _buildVMessSettings() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,13 +139,16 @@ Widget build(BuildContext context) {
       ],
     );
   }
-
+  
+  /// 构建Shadowsocks协议的设置界面
+  /// 包含密码和加密方式的配置选项
   Widget _buildShadowsocksSettings() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Shadowsocks 设置', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
+        // 密码输入框
         TextFormField(
           initialValue: _settings['password'] as String? ?? '',
           decoration: const InputDecoration(
@@ -142,6 +168,7 @@ Widget build(BuildContext context) {
           },
         ),
         const SizedBox(height: 8),
+        // 加密方式选择下拉框
         DropdownButtonFormField<String>(
           value: _settings['method'] as String? ?? 'aes-256-gcm',
           decoration: const InputDecoration(
@@ -164,7 +191,9 @@ Widget build(BuildContext context) {
       ],
     );
   }
-
+  
+  /// 保存服务器配置
+  /// 验证表单数据，创建ServerConfig对象并通过ViewModel保存
   void _saveServer() {
     if (_formKey.currentState!.validate()) {
       final viewModel = Provider.of<ServerDetailViewModel>(context, listen: false);

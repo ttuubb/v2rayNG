@@ -3,22 +3,40 @@ import '../models/subscription.dart';
 import '../models/repositories/subscription_repository.dart';
 import '../models/server_config.dart';
 
+/// 订阅视图模型类
+/// 用于管理V2Ray服务器订阅源，支持订阅的增删改查和自动更新
 class SubscriptionViewModel extends ChangeNotifier {
   final SubscriptionRepository _repository;
   
+  /// 订阅列表
   List<Subscription> _subscriptions = [];
+  
+  /// 是否正在加载数据
   bool _isLoading = false;
+  
+  /// 错误信息
   String? _error;
+  
+  /// 解析出的服务器配置列表
   List<ServerConfig> _parsedServers = [];
   
+  /// 构造函数
+  /// [_repository] 订阅仓库实例
   SubscriptionViewModel(this._repository);
   
+  /// 获取订阅列表
   List<Subscription> get subscriptions => _subscriptions;
+  
+  /// 获取加载状态
   bool get isLoading => _isLoading;
+  
+  /// 获取错误信息
   String? get error => _error;
+  
+  /// 获取解析出的服务器列表
   List<ServerConfig> get parsedServers => _parsedServers;
   
-  // 加载所有订阅
+  /// 加载所有订阅
   Future<void> loadSubscriptions() async {
     _isLoading = true;
     _error = null;
@@ -34,7 +52,8 @@ class SubscriptionViewModel extends ChangeNotifier {
     }
   }
   
-  // 添加订阅
+  /// 添加订阅
+  /// [subscription] 要添加的订阅配置
   Future<void> addSubscription(Subscription subscription) async {
     try {
       await _repository.addSubscription(subscription);
@@ -45,7 +64,8 @@ class SubscriptionViewModel extends ChangeNotifier {
     }
   }
   
-  // 更新订阅
+  /// 更新订阅
+  /// [subscription] 要更新的订阅配置
   Future<void> updateSubscription(Subscription subscription) async {
     try {
       await _repository.updateSubscription(subscription);

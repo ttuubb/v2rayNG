@@ -4,6 +4,12 @@ import 'package:fl_chart/fl_chart.dart';
 import '../viewmodels/traffic_viewmodel.dart';
 import '../models/traffic_history.dart';
 
+/// 流量统计页面
+/// 
+/// 用于显示指定服务器的实时流量和历史流量统计数据
+/// 包含两个主要功能标签页：
+/// 1. 实时流量：显示当前上传下载速度和总流量
+/// 2. 历史统计：以图表形式展示按小时或按天的流量统计数据
 class TrafficPage extends StatefulWidget {
   final String serverId;
 
@@ -13,6 +19,11 @@ class TrafficPage extends StatefulWidget {
   _TrafficPageState createState() => _TrafficPageState();
 }
 
+/// 流量统计页面状态类
+/// 
+/// 维护页面的状态管理和UI更新逻辑
+/// 使用SingleTickerProviderStateMixin支持TabController动画
+/// 通过TrafficViewModel处理数据加载和监控逻辑
 class _TrafficPageState extends State<TrafficPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String _selectedPeriod = 'day';
@@ -60,6 +71,12 @@ class _TrafficPageState extends State<TrafficPage> with SingleTickerProviderStat
     );
   }
 
+  /// 构建实时流量标签页
+  /// 
+  /// 显示当前的网络流量统计信息，包括：
+  /// - 实时上传和下载速度
+  /// - 累计上传和下载流量
+  /// - 最后更新时间
   Widget _buildRealtimeTrafficTab() {
     return Consumer<TrafficViewModel>(
       builder: (context, viewModel, child) {
@@ -113,6 +130,12 @@ class _TrafficPageState extends State<TrafficPage> with SingleTickerProviderStat
     );
   }
 
+  /// 构建历史流量标签页
+  /// 
+  /// 显示历史流量统计数据，支持：
+  /// - 按小时/按天查看数据
+  /// - 使用折线图展示流量变化趋势
+  /// - 显示选定时间段的总上传和下载流量
   Widget _buildHistoryTrafficTab() {
     return Consumer<TrafficViewModel>(
       builder: (context, viewModel, child) {
@@ -174,6 +197,13 @@ class _TrafficPageState extends State<TrafficPage> with SingleTickerProviderStat
     );
   }
 
+  /// 构建流量信息卡片
+  /// 
+  /// 用于在实时流量页面中显示单个流量指标
+  /// @param title 卡片标题
+  /// @param value 显示的数值
+  /// @param icon 图标
+  /// @param color 主题颜色
   Widget _buildTrafficCard({
     required String title,
     required String value,
@@ -202,6 +232,12 @@ class _TrafficPageState extends State<TrafficPage> with SingleTickerProviderStat
     );
   }
 
+  /// 构建流量统计图表
+  /// 
+  /// 使用折线图展示历史流量数据
+  /// - 支持上传和下载数据的双线展示
+  /// - 包含交互式提示框显示详细数据
+  /// - 自适应时间轴显示（小时/天）
   Widget _buildTrafficChart(List<TrafficHistory> history) {
     // 按时间排序
     history.sort((a, b) => a.startTime.compareTo(b.startTime));
@@ -293,6 +329,10 @@ class _TrafficPageState extends State<TrafficPage> with SingleTickerProviderStat
     );
   }
 
+  /// 格式化速度显示
+  /// 
+  /// 将字节每秒的速率转换为人类可读的格式
+  /// 自动选择合适的单位（B/s、KB/s、MB/s、GB/s）
   String _formatSpeed(double bytesPerSecond) {
     if (bytesPerSecond < 1024) {
       return '${bytesPerSecond.toStringAsFixed(2)} B/s';
@@ -305,6 +345,10 @@ class _TrafficPageState extends State<TrafficPage> with SingleTickerProviderStat
     }
   }
 
+  /// 格式化字节数显示
+  /// 
+  /// 将字节数转换为人类可读的格式
+  /// 自动选择合适的单位（B、KB、MB、GB）
   String _formatBytes(int bytes) {
     if (bytes < 1024) {
       return '$bytes B';

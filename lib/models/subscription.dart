@@ -1,15 +1,41 @@
 import 'package:uuid/uuid.dart';
 
+/// 订阅配置模型类
+/// 用于管理V2Ray服务器订阅源的配置信息和更新状态
 class Subscription {
+  /// 订阅的唯一标识符
   final String id;
+
+  /// 订阅名称
   final String name;
+
+  /// 订阅地址URL
   final String url;
+
+  /// 是否启用自动更新
   final bool autoUpdate;
-  final int updateInterval; // 更新间隔（小时）
+
+  /// 自动更新时间间隔（小时）
+  final int updateInterval;
+
+  /// 最后一次更新时间
   DateTime? lastUpdateTime;
+
+  /// 最后一次更新时的错误信息
   String? lastError;
+
+  /// 是否正在更新中
   bool isUpdating;
   
+  /// 构造函数
+  /// [id] 可选，如果未提供则自动生成UUID
+  /// [name] 订阅名称
+  /// [url] 订阅地址
+  /// [autoUpdate] 是否自动更新，默认为true
+  /// [updateInterval] 更新间隔，默认24小时
+  /// [lastUpdateTime] 最后更新时间
+  /// [lastError] 最后错误信息
+  /// [isUpdating] 是否更新中，默认false
   Subscription({
     String? id,
     required this.name,
@@ -21,7 +47,7 @@ class Subscription {
     this.isUpdating = false,
   }) : id = id ?? const Uuid().v4();
   
-  // 从JSON创建实例
+  /// 从JSON数据创建订阅实例
   factory Subscription.fromJson(Map<String, dynamic> json) {
     return Subscription(
       id: json['id'] as String,
@@ -37,7 +63,7 @@ class Subscription {
     );
   }
   
-  // 转换为JSON
+  /// 将订阅配置转换为JSON格式
   Map<String, dynamic> toJson() {
     return {
       'id': id,
