@@ -1,4 +1,4 @@
-name: Build v2ray-core/xray-core
+name: Build V2rayNG Libraries
 
 on:
   push:
@@ -7,96 +7,118 @@ on:
   pull_request:
     branches:
       - master
-  workflow_dispatch:
   schedule:
-    - cron: '0 0 * * 1'  # 每周一 00:00 UTC
+    - cron: '0 0 * * 0' # 每周日 UTC 时间 00:00 触发（北京时间周日08:00）
+  workflow_dispatch: # 允许手动触发
 
 jobs:
-  build:
-    name: Build for ${{ matrix.platform }}
+  build-libs:
+    name: Build Libraries for ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        platform: [android, ios, windows, macos, linux]
         include:
-          - platform: windows-x86
+          - platform: android
             os: ubuntu-latest
-          # 可根据需要恢复其他平台
-          # - platform: windows-amd64
-          #   os: ubuntu-latest
+          - platform: ios
+            os: macos-latest
+          - platform: windows
+            os: windows-latest
+          - platform: macos
+            os: macos-latest
+          - platform: linux
+            os: ubuntu-latest
+
     steps:
-      - name: Checkout source code
+      # 检出代码
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Go
+      # 设置 Go 环境
+      - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: '1.21' # 根据 v2ray-core/xray-core 要求调整
 
-      - name: Install dependencies (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
+      # 安装依赖工具
+      - name: Install Dependencies
         run: |
-          sudo apt update
-          sudo apt install -y build-essential clang cmake pkg-config \
-                              gcc g++ libgcc-13-dev \
-                              mingw-w64-i686-dev mingw-w64-x86-64-dev
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          go install golang.org/x/tools/cmd/goimports@latest
+        if: matrix.platform == 'android' || matrix.platform == 'ios'
 
-      - name: Set environment variables
+      # 拉取 v2ray-core/xray-core 源码
+      - name: Clone v2ray-core/xray-core
         run: |
-          echo "CGO_ENABLED=1" >> $GITHUB_ENV
-          case "${{ matrix.platform }}" in
-            "windows-x86")
-              echo "GOOS=windows" >> $GITHUB_ENV
-              echo "GOARCH=386" >> $GITHUB_ENV
-              echo "GO386=sse2" >> $GITHUB_ENV
-              echo "CC=/usr/bin/i686-w64-mingw32-gcc" >> $GITHUB_ENV
-              echo "CXX=/usr/bin/i686-w64-mingw32-g++" >> $GITHUB_ENV
-              echo "CGO_CFLAGS=-D_WIN32_WINNT=0x0600" >> $GITHUB_ENV
-              echo "CGO_LDFLAGS=-lws2_32 -luserenv -lshlwapi" >> $GITHUB_ENV
-              ;;
-          esac
-
-      - name: Build v2ray-core/xray-core
-        run: |
-          git clone --depth 1 https://github.com/v2ray/v2ray-core.git
+          git clone https://github.com/v2fly/v2ray-core.git
           cd v2ray-core
-          mkdir -p output
-          go mod tidy
-          go build -v -o output/v2ray-${{ matrix.platform }} ./main
+          git checkout v5.15.1 # 指定版本，可根据需要调整
 
-      - name: Upload build artifacts
+      # 创建输出目录
+      - name: Create Output Directories
+        run: |
+          mkdir -p android/app/src/main/jniLibs/arm64-v8a
+          mkdir -p android/app/src/main/jniLibs/armeabi-v7a
+          mkdir -p android/app/src/main/jniLibs/x86
+          mkdir -p android/app/src/main/jniLibs/x86_64
+          mkdir -p ios/Frameworks
+          mkdir -p windows
+          mkdir -p macos
+          mkdir -p linux
+
+      # 编译 Android 库
+      - name: Build Android Libraries
+        if: matrix.platform == 'android'
+        run: |
+          cd v2ray-core
+          gomobile bind -target android -o ../android/app/src/main/jniLibs/libv2ray.aar ./main
+          unzip ../android/app/src/main/jniLibs/libv2ray.aar -d temp
+          cp temp/jni/*/* ../android/app/src/main/jniLibs/
+
+      # 编译 iOS 库
+      - name: Build iOS Libraries
+        if: matrix.platform == 'ios'
+        run: |
+          cd v2ray-core
+          gomobile bind -target ios -o ../ios/Frameworks/V2ray.framework ./main
+          # 可选：生成静态库
+          go build -buildmode=c-archive -o ../ios/Frameworks/libv2ray.a ./main
+
+      # 编译 Windows 库
+      - name: Build Windows Libraries
+        if: matrix.platform == 'windows'
+        run: |
+          cd v2ray-core
+          go build -buildmode=c-shared -o ../windows/libv2ray.dll ./main
+
+      # 编译 macOS 库
+      - name: Build macOS Libraries
+        if: matrix.platform == 'macos'
+        run: |
+          cd v2ray-core
+          go build -buildmode=c-shared -o ../macos/libv2ray.dylib ./main
+          # 可选：生成静态库
+          go build -buildmode=c-archive -o ../macos/libv2ray.a ./main
+
+      # 编译 Linux 库
+      - name: Build Linux Libraries
+        if: matrix.platform == 'linux'
+        run: |
+          cd v2ray-core
+          go build -buildmode=c-shared -o ../linux/libv2ray.so ./main
+          # 可选：生成静态库
+          go build -buildmode=c-archive -o ../linux/libv2ray.a ./main
+
+      # 上传构建产物
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: v2ray-${{ matrix.platform }}
-          path: v2ray-core/output/v2ray-*
-
-  release:
-    needs: build  # 依赖 build 作业完成
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'  # 仅在计划任务或手动触发时运行
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 默认提供的 token
-        with:
-          tag_name: "v${{ github.run_id }}-weekly"  # 使用运行 ID 生成唯一标签
-          release_name: "Weekly Release ${{ github.run_id }}"
-          draft: false
-          prerelease: false
-
-      - name: Upload Release Assets
-        run: |
-          for artifact in artifacts/v2ray-*/*; do
-            gh release upload ${{ steps.create_release.outputs.id }} "$artifact" --clobber
-          done
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: ${{ matrix.platform }}-libs
+          path: |
+            android/app/src/main/jniLibs/
+            ios/Frameworks/
+            windows/libv2ray.dll
+            macos/libv2ray.*
+            linux/libv2ray.*
+          if-no-files-found: warn # 如果没有文件，仅警告而不失败
