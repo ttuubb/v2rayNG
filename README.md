@@ -45,8 +45,8 @@ cd v2rayng
 # 启用 Windows 桌面支持
 flutter config --enable-windows-desktop
 
-# 初始化项目
-flutter create .
+# 初始化项目（仅Windows平台）
+flutter create --platforms=windows .
 ```
 
 3. 安装依赖
@@ -56,7 +56,7 @@ flutter pub get
 
 4. 运行应用
 ```bash
-flutter run
+flutter run -d windows
 ```
 
 ### 下载预编译版本
