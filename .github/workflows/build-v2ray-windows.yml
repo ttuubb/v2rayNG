@@ -3,10 +3,10 @@ name: Build v2ray-core/xray-core
 on:
   push:
     branches:
-      - main  # 监听 main 分支的推送
+      - master  # 监听 master 分支的推送
   pull_request:
     branches:
-      - main
+      - master
   workflow_dispatch:  # 允许手动触发
 
 jobs:
