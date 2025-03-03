@@ -45,7 +45,7 @@ class ApiServiceImpl implements ApiService {
   Future<bool> testConnection(String address, int port) async {
     try {
       // 尝试建立Socket连接
-      final socket = await Socket.connect(address, port, timeout: Duration(seconds: 5));
+      final socket = await Socket.connect(address, port, timeout: const Duration(seconds: 5));
       await socket.close();
       return true;
     } catch (e) {

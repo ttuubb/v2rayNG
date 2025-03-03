@@ -66,9 +66,43 @@ class SubscriptionViewModel extends ChangeNotifier {
   
   /// 更新订阅
   /// [subscription] 要更新的订阅配置
-  Future<void> updateSubscription(Subscription subscription) async {
+  Future<void> updateSubscription(String id) async {
     try {
-      await _repository.updateSubscription(subscription);
+      final subscription = _subscriptions.firstWhere((s) => s.id == id);
+      await _repository.updateSubscriptionContent(subscription.id);
+      await loadSubscriptions();
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+    }
+  }
+
+  /// 更新订阅配置
+  /// [id] 订阅ID
+  /// [name] 新的订阅名称
+  /// [url] 新的订阅地址
+  /// [autoUpdate] 是否自动更新
+  /// [updateInterval] 更新间隔（小时）
+  Future<void> updateSubscriptionConfig(
+    String id, {
+    required String name,
+    required String url,
+    required bool autoUpdate,
+    required int updateInterval,
+  }) async {
+    try {
+      final subscription = _subscriptions.firstWhere((s) => s.id == id);
+      final updatedSubscription = Subscription(
+        id: subscription.id,
+        name: name,
+        url: url,
+        autoUpdate: autoUpdate,
+        updateInterval: updateInterval,
+        lastUpdateTime: subscription.lastUpdateTime,
+        lastError: subscription.lastError,
+        isUpdating: subscription.isUpdating,
+      );
+      await _repository.updateSubscription(updatedSubscription);
       await loadSubscriptions();
     } catch (e) {
       _error = e.toString();

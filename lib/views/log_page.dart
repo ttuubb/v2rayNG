@@ -223,7 +223,7 @@ class LogEntryTile extends StatelessWidget {
       ),
       subtitle: Text(
         '${log.timestamp.toString().substring(0, 19)} ${log.tag != null ? "[${log.tag}]" : ""}',
-        style: TextStyle(fontSize: 12),
+        style: const TextStyle(fontSize: 12),
       ),
       children: [
         if (log.details != null)

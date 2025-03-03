@@ -14,9 +14,8 @@ class TrafficPage extends StatefulWidget {
   final String serverId;
 
   const TrafficPage({Key? key, required this.serverId}) : super(key: key);
-
   @override
-  _TrafficPageState createState() => _TrafficPageState();
+  TrafficPageState createState() => TrafficPageState();
 }
 
 /// 流量统计页面状态类
@@ -24,7 +23,7 @@ class TrafficPage extends StatefulWidget {
 /// 维护页面的状态管理和UI更新逻辑
 /// 使用SingleTickerProviderStateMixin支持TabController动画
 /// 通过TrafficViewModel处理数据加载和监控逻辑
-class _TrafficPageState extends State<TrafficPage> with SingleTickerProviderStateMixin {
+class TrafficPageState extends State<TrafficPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String _selectedPeriod = 'day';
 
@@ -35,6 +34,7 @@ class _TrafficPageState extends State<TrafficPage> with SingleTickerProviderStat
     
     // 加载流量数据
     Future.microtask(() {
+      if (!mounted) return;
       final viewModel = context.read<TrafficViewModel>();
       viewModel.loadTrafficHistory(widget.serverId);
       viewModel.startMonitoring(widget.serverId);
@@ -121,7 +121,7 @@ class _TrafficPageState extends State<TrafficPage> with SingleTickerProviderStat
               const SizedBox(height: 24),
               Text(
                 '最后更新: ${stats.timestamp.toString().substring(0, 19)}',
-                style: TextStyle(color: Colors.grey),
+                style: const TextStyle(color: Colors.grey),
               ),
             ],
           ),
@@ -221,9 +221,9 @@ class _TrafficPageState extends State<TrafficPage> with SingleTickerProviderStat
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: TextStyle(fontSize: 16, color: Colors.grey)),
+                Text(title, style: const TextStyle(fontSize: 16, color: Colors.grey)),
                 const SizedBox(height: 4),
-                Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               ],
             ),
           ],
@@ -253,7 +253,7 @@ class _TrafficPageState extends State<TrafficPage> with SingleTickerProviderStat
 
     return LineChart(
       LineChartData(
-        gridData: FlGridData(show: true),
+        gridData: const FlGridData(show: true),
         titlesData: FlTitlesData(
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
@@ -279,8 +279,8 @@ class _TrafficPageState extends State<TrafficPage> with SingleTickerProviderStat
               reservedSize: 40,
             ),
           ),
-          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         ),
         borderData: FlBorderData(show: true),
         lineBarsData: [
@@ -290,7 +290,7 @@ class _TrafficPageState extends State<TrafficPage> with SingleTickerProviderStat
             color: Colors.blue,
             barWidth: 3,
             isStrokeCapRound: true,
-            dotData: FlDotData(show: false),
+            dotData: const FlDotData(show: false),
             belowBarData: BarAreaData(show: true, color: Colors.blue.withOpacity(0.2)),
           ),
           LineChartBarData(
@@ -299,7 +299,7 @@ class _TrafficPageState extends State<TrafficPage> with SingleTickerProviderStat
             color: Colors.green,
             barWidth: 3,
             isStrokeCapRound: true,
-            dotData: FlDotData(show: false),
+            dotData: const FlDotData(show: false),
             belowBarData: BarAreaData(show: true, color: Colors.green.withOpacity(0.2)),
           ),
         ],
@@ -317,7 +317,7 @@ class _TrafficPageState extends State<TrafficPage> with SingleTickerProviderStat
                       : '${date.month}/${date.day}';
                   return LineTooltipItem(
                     '${isUpload ? "上传" : "下载"}: ${spot.y.toStringAsFixed(2)} MB\n$dateStr',
-                    TextStyle(color: Colors.white),
+                    const TextStyle(color: Colors.white),
                   );
                 }
                 return null;

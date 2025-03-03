@@ -45,7 +45,7 @@ class ServerConfig {
     required this.settings,
     this.enabled = true,
     this.latency,
-  }) : this.id = id ?? DateTime.now().millisecondsSinceEpoch.toString() {
+  }) : id = id ?? DateTime.now().millisecondsSinceEpoch.toString() {
     // 验证端口范围
     if (port < 1 || port > 65535) {
       throw ArgumentError('Port must be between 1 and 65535');

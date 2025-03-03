@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../viewmodels/server_list_viewmodel.dart';
 import '../models/server_config.dart';
 import 'package:v2rayng/views/server_detail_page.dart';
+import 'subscription_page.dart';
 
 /// 服务器列表页面
 /// 显示所有配置的代理服务器，支持添加、编辑、删除和启用/禁用服务器
@@ -30,6 +31,18 @@ class _ServerListPageState extends State<ServerListPage> {
       appBar: AppBar(
         title: const Text('服务器列表'),
         actions: [
+          // 订阅管理按钮
+          IconButton(
+            icon: const Icon(Icons.cloud_download),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SubscriptionPage(),
+                ),
+              );
+            },
+          ),
           // 添加新服务器按钮
           IconButton(
             icon: const Icon(Icons.add),

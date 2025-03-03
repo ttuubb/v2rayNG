@@ -193,7 +193,7 @@ class TrafficServiceImpl implements TrafficService {
     });
     
     // 定时聚合和发布流量统计
-    _aggregationTimer = Timer.periodic(Duration(seconds: 1), (_) {
+    _aggregationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       _aggregateAndPublishStats();
     });
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/di/service_locator.dart';
 import 'viewmodels/server_list_viewmodel.dart';
+import 'viewmodels/subscription_viewmodel.dart';
 import 'views/server_list_page.dart';
 import 'views/server_detail_page.dart';
 
@@ -32,6 +33,10 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<ServerListViewModel>(
           create: (_) => getIt<ServerListViewModel>(),
         ),
+        // 注册订阅管理视图模型，用于管理订阅源的状态
+        ChangeNotifierProvider<SubscriptionViewModel>(
+          create: (_) => getIt<SubscriptionViewModel>(),
+        ),
       ],
       child: MaterialApp(
         title: 'V2rayNG',
@@ -42,7 +47,7 @@ class MyApp extends StatelessWidget {
         ),
         // 配置应用程序暗色主题
         darkTheme: ThemeData.dark().copyWith(
-          useMaterial3: true,
+          
         ),
         // 设置应用程序首页
         home: const HomePage(),

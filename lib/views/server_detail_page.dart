@@ -85,6 +85,90 @@ class _ServerDetailPageState extends State<ServerDetailPage> {
           key: _formKey,
           child: Column(
             children: [
+              // 服务器名称输入框
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: '服务器名称',
+                  hintText: '输入服务器名称',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return '请输入服务器名称';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              // 服务器地址输入框
+              TextFormField(
+                controller: _addressController,
+                decoration: const InputDecoration(
+                  labelText: '服务器地址',
+                  hintText: '输入服务器地址',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return '请输入服务器地址';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              // 端口号输入框
+              TextFormField(
+                controller: _portController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: '端口号',
+                  hintText: '输入端口号',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return '请输入端口号';
+                  }
+                  final port = int.tryParse(value);
+                  if (port == null || port <= 0 || port > 65535) {
+                    return '请输入有效的端口号（1-65535）';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              // 协议选择下拉框
+              DropdownButtonFormField<String>(
+                value: _selectedProtocol,
+                decoration: const InputDecoration(
+                  labelText: '代理协议',
+                  border: OutlineInputBorder(),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'vmess', child: Text('VMess')),
+                  DropdownMenuItem(value: 'shadowsocks', child: Text('Shadowsocks')),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _selectedProtocol = value;
+                      _settings.clear(); // 切换协议时清空之前的设置
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+              // 启用开关
+              SwitchListTile(
+                title: const Text('启用'),
+                value: _isEnabled,
+                onChanged: (value) {
+                  setState(() {
+                    _isEnabled = value;
+                  });
+                },
+              ),
               // 根据选择的协议类型显示对应的设置选项
               _buildProtocolSettings(),
               const SizedBox(height: 20),

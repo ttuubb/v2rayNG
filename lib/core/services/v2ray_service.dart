@@ -88,7 +88,7 @@ class V2rayServiceImpl implements V2rayService {
   }
   
   void _startTrafficStats(String serverId) {
-    _statsTimer = Timer.periodic(Duration(seconds: 1), (_) {
+    _statsTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       // 模拟获取流量统计
       _eventBus.emit(TrafficStatsEvent(
         serverId,

@@ -121,7 +121,7 @@ class LogViewModel extends ChangeNotifier {
     } catch (e) {
       _error = e.toString();
       notifyListeners();
-      throw e;
+      rethrow;
     }
   }
   

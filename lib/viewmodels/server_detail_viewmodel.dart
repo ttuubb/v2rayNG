@@ -85,7 +85,7 @@ class ServerDetailViewModel extends ChangeNotifier {
 
     try {
       // TODO: 实现服务器连接测试逻辑
-      await Future.delayed(Duration(seconds: 1));
+      await Future.delayed(const Duration(seconds: 1));
     } catch (e) {
       _error = e.toString();
     } finally {
