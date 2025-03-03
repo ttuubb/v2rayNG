@@ -54,9 +54,7 @@ jobs:
       # 安装依赖工具并初始化 gomobile
       - name: Install Dependencies and Init Gomobile
         run: |
-          # 显式安装 gomobile 及其依赖
-          go get -u golang.org/x/mobile/bind
-          go get -u golang.org/x/mobile/cmd/gomobile
+          # 使用 go install 安装 gomobile 和相关工具
           go install golang.org/x/mobile/cmd/gomobile@latest
           go install golang.org/x/tools/cmd/goimports@latest
           # 初始化 gomobile，确保所有工具链可用
