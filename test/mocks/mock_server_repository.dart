@@ -1,6 +1,6 @@
 import 'package:v2rayng/models/repositories/server_repository.dart';
 import 'package:v2rayng/models/server_config.dart';
-import 'package:v2rayng/repositories/server_repository.dart' as repo;
+import 'package:v2rayng/models/repositories/server_repository.dart' as repo;
 
 class MockServerRepository implements ServerRepository {
   final List<ServerConfig> _servers = [];

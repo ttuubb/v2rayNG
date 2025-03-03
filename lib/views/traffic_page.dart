@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../viewmodels/traffic_viewmodel.dart';
-import '../models/traffic_stats.dart';
 import '../models/traffic_history.dart';
 
 class TrafficPage extends StatefulWidget {

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../core/event_bus.dart';
 import '../core/events/app_events.dart';
-import '../models/traffic_stats.dart';
 import '../models/traffic_history.dart';
 import '../core/services/traffic_service.dart';
 
@@ -15,6 +14,7 @@ class TrafficViewModel extends ChangeNotifier {
   List<TrafficHistory> _history = [];
   bool _isLoading = false;
   String? _error;
+  String? _monitoringServerId;
   
   TrafficViewModel(this._trafficService, this._eventBus) {
     // 订阅流量统计更新事件
@@ -43,6 +43,25 @@ class TrafficViewModel extends ChangeNotifier {
   List<TrafficHistory> get history => _history;
   bool get isLoading => _isLoading;
   String? get error => _error;
+
+  // 开始监控指定服务器的流量
+  void startMonitoring(String serverId) {
+    if (_monitoringServerId != serverId) {
+      stopMonitoring();
+      _monitoringServerId = serverId;
+      _trafficService.startMonitoring(serverId);
+    }
+  }
+
+  // 停止流量监控
+  void stopMonitoring() {
+    if (_monitoringServerId != null) {
+      _trafficService.stopMonitoring(_monitoringServerId!);
+      _monitoringServerId = null;
+    }
+    _subscription?.cancel();
+    _subscription = null;
+  }
 
   // 加载历史流量数据
   Future<void> loadTrafficHistory(String serverId) async {
