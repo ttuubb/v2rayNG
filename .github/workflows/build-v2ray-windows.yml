@@ -51,11 +51,15 @@ jobs:
           echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME" >> $GITHUB_ENV
           ls -la $ANDROID_NDK_HOME/meta/ # 验证 meta 目录是否存在
 
-      # 安装依赖工具
-      - name: Install Dependencies
+      # 安装依赖工具并初始化 gomobile
+      - name: Install Dependencies and Init Gomobile
         run: |
           go install golang.org/x/mobile/cmd/gomobile@latest
           go install golang.org/x/tools/cmd/goimports@latest
+          # 初始化 gomobile，确保 gobind 可用
+          gomobile init
+        env:
+          ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }} # 确保 Android NDK 环境变量在初始化时可用
         if: matrix.platform == 'android' || matrix.platform == 'ios'
 
       # 拉取 v2ray-core/xray-core 源码
