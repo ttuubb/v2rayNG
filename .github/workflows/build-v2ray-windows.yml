@@ -84,6 +84,34 @@ jobs:
               cd v2ray-core
               git status
               git rev-parse HEAD
+              
+              # 验证关键文件和目录
+              echo "验证关键文件和目录..."
+              required_files=("go.mod" "main/main.go" "app/router/config.proto")
+              required_dirs=("app" "common" "proxy" "transport")
+              
+              # 检查文件
+              for file in "${required_files[@]}"; do
+                if [ ! -f "$file" ]; then
+                  echo "错误：缺少关键文件 $file"
+                  exit 1
+                fi
+              done
+              
+              # 检查目录
+              for dir in "${required_dirs[@]}"; do
+                if [ ! -d "$dir" ]; then
+                  echo "错误：缺少关键目录 $dir"
+                  exit 1
+                fi
+              done
+              
+              # 检查文件权限
+              echo "检查文件权限..."
+              find . -type f -exec chmod 644 {} \;
+              find . -type d -exec chmod 755 {} \;
+              
+              echo "所有验证通过"
               break
             } || {
               echo "克隆失败，错误代码: $?"
@@ -98,6 +126,32 @@ jobs:
                   cd v2ray-core
                   git status
                   git rev-parse HEAD
+                  
+                  # 对 git 协议克隆的仓库执行相同的验证
+                  echo "验证关键文件和目录..."
+                  required_files=("go.mod" "main/main.go" "app/router/config.proto")
+                  required_dirs=("app" "common" "proxy" "transport")
+                  
+                  for file in "${required_files[@]}"; do
+                    if [ ! -f "$file" ]; then
+                      echo "错误：缺少关键文件 $file"
+                      exit 1
+                    fi
+                  done
+                  
+                  for dir in "${required_dirs[@]}"; do
+                    if [ ! -d "$dir" ]; then
+                      echo "错误：缺少关键目录 $dir"
+                      exit 1
+                    fi
+                  done
+                  
+                  # 检查文件权限
+                  echo "检查文件权限..."
+                  find . -type f -exec chmod 644 {} \;
+                  find . -type d -exec chmod 755 {} \;
+                  
+                  echo "所有验证通过"
                   break
                 } || {
                   echo "所有尝试都失败了"
@@ -113,6 +167,10 @@ jobs:
             ls -la
             exit 1
           fi
+          
+          # 显示最终的目录结构
+          echo "最终目录结构："
+          ls -la v2ray-core/
 
       # 创建输出目录
       - name: Create Output Directories
