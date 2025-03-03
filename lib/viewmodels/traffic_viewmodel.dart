@@ -4,6 +4,7 @@ import '../core/event_bus.dart';
 import '../core/events/app_events.dart';
 import '../models/traffic_history.dart';
 import '../core/services/traffic_service.dart';
+import '../models/traffic_stats.dart';
 
 class TrafficViewModel extends ChangeNotifier {
   final TrafficService _trafficService;
@@ -56,7 +57,7 @@ class TrafficViewModel extends ChangeNotifier {
   // 停止流量监控
   void stopMonitoring() {
     if (_monitoringServerId != null) {
-      _trafficService.stopMonitoring(_monitoringServerId!);
+      _trafficService.stopMonitoring();
       _monitoringServerId = null;
     }
     _subscription?.cancel();

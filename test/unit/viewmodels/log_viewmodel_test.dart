@@ -1,13 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:get_it/get_it.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'dart:async';
 import 'dart:io';
-import 'package:v2rayng/core/di/service_locator.dart';
 import 'package:v2rayng/core/event_bus.dart';
 import 'package:v2rayng/core/services/log_service.dart';
 import 'package:v2rayng/viewmodels/log_viewmodel.dart';
+import 'package:v2rayng/core/events/app_events.dart';
 
 // 生成Mock类
 @GenerateMocks([LogService, EventBus])

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/server_list_viewmodel.dart';
 import '../models/server_config.dart';
-import '../core/di/service_locator.dart';
 import 'package:v2rayng/views/server_detail_page.dart';
 
 class ServerListPage extends StatefulWidget {

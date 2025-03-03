@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/server_config.dart';
-import '../viewmodels/server_list_viewmodel.dart';
 import '../viewmodels/server_detail_viewmodel.dart';
 
 class ServerDetailPage extends StatefulWidget {
@@ -48,23 +47,35 @@ class _ServerDetailPageState extends State<ServerDetailPage> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.server == null ? '添加服务器' : '编辑服务器'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: Text(widget.server == null ? '添加服务器' : '编辑服务器'),
+    ),
+    floatingActionButton: FloatingActionButton(
+      onPressed: _saveServer,
+      child: const Icon(Icons.save),
+    ),
+    body: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Form( // 添加Form包裹
+        key: _formKey,
         child: Column(
           children: [
-            // 服务器详情表单
-            // 这里根据实际需求添加表单字段
+            // 原有表单字段...
+            _buildProtocolSettings(),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _saveServer,
+              child: const Text('保存配置'),
+            ),
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildProtocolSettings() {
     // 这里可以根据不同的协议类型显示不同的设置选项

@@ -144,7 +144,6 @@ class SubscriptionViewModel extends ChangeNotifier {
     notifyListeners();
     
     try {
-      final subscription = _subscriptions.firstWhere((s) => s.id == subscriptionId);
       // 导出订阅内容
       final exportData = await _repository.exportSubscriptions();
       return exportData;
