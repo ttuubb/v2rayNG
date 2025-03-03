@@ -12,10 +12,26 @@ on:
 jobs:
   build:
     name: Build for ${{ matrix.platform }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        platform: [windows-x86, windows-amd64, android-arm, android-arm64, android-x86, android-x86_64, ios-arm64, ios-x86_64]
+        include:
+          - platform: windows-x86
+            os: ubuntu-latest
+          - platform: windows-amd64
+            os: ubuntu-latest
+          - platform: android-arm
+            os: ubuntu-latest
+          - platform: android-arm64
+            os: ubuntu-latest
+          - platform: android-x86
+            os: ubuntu-latest
+          - platform: android-x86_64
+            os: ubuntu-latest
+          - platform: ios-arm64
+            os: macos-latest
+          - platform: ios-x86_64
+            os: macos-latest
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -25,32 +41,64 @@ jobs:
         with:
           go-version: '1.21'  # 适配 v2ray-core/xray-core
 
-      - name: Install dependencies
+      - name: Install dependencies (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt update
           sudo apt install -y build-essential clang cmake pkg-config \
-                              gcc g++ libc6-dev libgcc-13-dev \
-                              gcc-arm-linux-gnueabihf gcc-aarch64-linux-gnu \
-                              android-ndk libc6-dev
+                              gcc g++ libgcc-13-dev \
+                              gcc-arm-linux-gnueabihf gcc-aarch64-linux-gnu
+          wget -q https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
+          unzip -q android-ndk-r25b-linux.zip
+          echo "ANDROID_NDK_HOME=$(pwd)/android-ndk-r25b" >> $GITHUB_ENV
 
       - name: Set environment variables
         run: |
           echo "CGO_ENABLED=1" >> $GITHUB_ENV
           case "${{ matrix.platform }}" in
-            "windows-x86")      echo "GOOS=windows" >> $GITHUB_ENV && echo "GOARCH=386" >> $GITHUB_ENV ;;
-            "windows-amd64")    echo "GOOS=windows" >> $GITHUB_ENV && echo "GOARCH=amd64" >> $GITHUB_ENV ;;
-            "android-arm")      echo "GOOS=android" >> $GITHUB_ENV && echo "GOARCH=arm" >> $GITHUB_ENV && echo "CC=arm-linux-androideabi-gcc" >> $GITHUB_ENV ;;
-            "android-arm64")    echo "GOOS=android" >> $GITHUB_ENV && echo "GOARCH=arm64" >> $GITHUB_ENV && echo "CC=aarch64-linux-android-gcc" >> $GITHUB_ENV ;;
-            "android-x86")      echo "GOOS=android" >> $GITHUB_ENV && echo "GOARCH=386" >> $GITHUB_ENV ;;
-            "android-x86_64")   echo "GOOS=android" >> $GITHUB_ENV && echo "GOARCH=amd64" >> $GITHUB_ENV ;;
-            "ios-arm64")        echo "GOOS=ios" >> $GITHUB_ENV && echo "GOARCH=arm64" >> $GITHUB_ENV ;;
-            "ios-x86_64")       echo "GOOS=ios" >> $GITHUB_ENV && echo "GOARCH=amd64" >> $GITHUB_ENV ;;
+            "windows-x86")
+              echo "GOOS=windows" >> $GITHUB_ENV
+              echo "GOARCH=386" >> $GITHUB_ENV
+              ;;
+            "windows-amd64")
+              echo "GOOS=windows" >> $GITHUB_ENV
+              echo "GOARCH=amd64" >> $GITHUB_ENV
+              ;;
+            "android-arm")
+              echo "GOOS=android" >> $GITHUB_ENV
+              echo "GOARCH=arm" >> $GITHUB_ENV
+              echo "CC=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi21-clang" >> $GITHUB_ENV
+              ;;
+            "android-arm64")
+              echo "GOOS=android" >> $GITHUB_ENV
+              echo "GOARCH=arm64" >> $GITHUB_ENV
+              echo "CC=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang" >> $GITHUB_ENV
+              ;;
+            "android-x86")
+              echo "GOOS=android" >> $GITHUB_ENV
+              echo "GOARCH=386" >> $GITHUB_ENV
+              echo "CC=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang" >> $GITHUB_ENV
+              ;;
+            "android-x86_64")
+              echo "GOOS=android" >> $GITHUB_ENV
+              echo "GOARCH=amd64" >> $GITHUB_ENV
+              echo "CC=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang" >> $GITHUB_ENV
+              ;;
+            "ios-arm64")
+              echo "GOOS=ios" >> $GITHUB_ENV
+              echo "GOARCH=arm64" >> $GITHUB_ENV
+              ;;
+            "ios-x86_64")
+              echo "GOOS=ios" >> $GITHUB_ENV
+              echo "GOARCH=amd64" >> $GITHUB_ENV
+              ;;
           esac
 
       - name: Build v2ray-core/xray-core
         run: |
           git clone --depth 1 https://github.com/v2ray/v2ray-core.git
           cd v2ray-core
+          mkdir -p output
           go mod tidy
           go build -o output/v2ray-${{ matrix.platform }} ./main
 
