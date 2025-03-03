@@ -64,6 +64,7 @@ jobs:
 
       # 拉取 v2ray-core/xray-core 源码
       - name: Clone v2ray-core/xray-core
+        shell: bash
         run: |
           # 添加重试机制和超时设置
           for i in 1 2 3 4 5; do
