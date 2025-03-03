@@ -1,9 +1,16 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../server_config.dart';
-import '../../repositories/server_repository.dart' as repo;
 
-class ServerRepository implements repo.ServerRepository {
+// 抽象接口定义
+abstract class ServerRepositoryInterface {
+  Future<List<ServerConfig>> getAllServers();
+  Future<void> addServer(ServerConfig server);
+  Future<void> updateServer(ServerConfig server);
+  Future<void> deleteServer(String serverId);
+}
+
+class ServerRepository implements ServerRepositoryInterface {
   static const String _storageKey = 'server_configs';
   final SharedPreferences _prefs;
 

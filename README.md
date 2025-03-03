@@ -36,7 +36,7 @@ V2rayNG Flutter 是一个使用 Flutter 框架开发的跨平台代理工具客�
 
 1. 克隆仓库
 ```bash
-git clone https://github.com/ttuubb/v2rayNG.git
+git clone git clone -b Windows --single-branch https://github.com/ttuubb/v2rayNG.git
 cd v2rayng
 ```
 
