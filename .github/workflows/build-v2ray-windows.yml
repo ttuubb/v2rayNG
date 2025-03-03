@@ -34,17 +34,18 @@ jobs:
           go env -w CGO_ENABLED=1
           go env -w GOOS=windows
           
+          # 设置MinGW环境
+          $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
+          
           # 为 x86 构建
           go env -w GOARCH=386
+          go env -w CC=gcc
           go build -o ..\v2ray_x86.dll -buildmode=c-shared ./main
           
           # 为 x64 构建
           go env -w GOARCH=amd64
+          go env -w CC=gcc
           go build -o ..\v2ray_x64.dll -buildmode=c-shared ./main
-          
-          # 为 ARM64 构建 (如果需要)
-          go env -w GOARCH=arm64
-          go build -o ..\v2ray_arm64.dll -buildmode=c-shared ./main
       
       - name: Upload Windows Libraries
         uses: actions/upload-artifact@v4
@@ -53,7 +54,6 @@ jobs:
           path: |
             v2ray_x86.dll
             v2ray_x64.dll
-            v2ray_arm64.dll
       
       - name: Create Release
         if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
@@ -64,6 +64,5 @@ jobs:
           files: |
             v2ray_x86.dll
             v2ray_x64.dll
-            v2ray_arm64.dll
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
