@@ -135,7 +135,7 @@ flutter test test/performance
 
 ## 贡献指南
 
-我们欢迎并感谢任何形式的贡献！
+我们欢迎并感谢任何形式的贡献！ 
 
 ### 提交 Issue
 

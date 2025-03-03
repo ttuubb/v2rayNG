@@ -3,7 +3,7 @@ name: Build V2Ray Windows Libraries
 on:
   workflow_dispatch:  # 允许手动触发
   push:
-    branches: [ main ]
+    branches: [ Windows ]
     paths:
       - 'v2ray-core/**'  # 当 v2ray-core 目录有变化时触发
   schedule:
@@ -20,7 +20,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.21'  # 使用适合 v2ray-core 的 Go 版本
+          go-version: '1.20'  # 降级Go版本以兼容quic-go库
       
       - name: Get V2Ray Core Source
         run: |
@@ -47,7 +47,7 @@ jobs:
           go build -o ..\v2ray_arm64.dll -buildmode=c-shared ./main
       
       - name: Upload Windows Libraries
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: v2ray-windows-libs
           path: |
