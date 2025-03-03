@@ -56,10 +56,9 @@ jobs:
         run: |
           go install golang.org/x/mobile/cmd/gomobile@latest
           go install golang.org/x/tools/cmd/goimports@latest
-          # 初始化 gomobile，确保 gobind 可用
           gomobile init
         env:
-          ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }} # 确保 Android NDK 环境变量在初始化时可用
+          ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
         if: matrix.platform == 'android' || matrix.platform == 'ios'
 
       # 拉取 v2ray-core/xray-core 源码
@@ -70,47 +69,33 @@ jobs:
           GIT_TRACE: 1
           GIT_CURL_VERBOSE: 1
         run: |
-          # 清理可能存在的旧目录
           rm -rf v2ray-core
-          
-          # 添加重试机制和超时设置
           for i in 1 2 3 4 5; do
             echo "尝试克隆 v2ray-core 仓库，第 $i 次尝试..."
             echo "使用 git 版本: $(git --version)"
-            
-            # 使用 --verbose 显示更多克隆信息
             git clone --verbose --depth 1 --branch v5.15.1 https://github.com/v2fly/v2ray-core.git && {
               echo "v2ray-core 克隆成功"
               cd v2ray-core
               git status
               git rev-parse HEAD
-              
-              # 验证关键文件和目录
               echo "验证关键文件和目录..."
               required_files=("go.mod" "main/main.go" "app/router/config.proto")
               required_dirs=("app" "common" "proxy" "transport")
-              
-              # 检查文件
               for file in "${required_files[@]}"; do
                 if [ ! -f "$file" ]; then
                   echo "错误：缺少关键文件 $file"
                   exit 1
                 fi
               done
-              
-              # 检查目录
               for dir in "${required_dirs[@]}"; do
                 if [ ! -d "$dir" ]; then
                   echo "错误：缺少关键目录 $dir"
                   exit 1
                 fi
               done
-              
-              # 检查文件权限
               echo "检查文件权限..."
               find . -type f -exec chmod 644 {} \;
               find . -type d -exec chmod 755 {} \;
-              
               echo "所有验证通过"
               cd ..
               break
@@ -121,37 +106,29 @@ jobs:
                 sleep 60
               else
                 echo "克隆失败，已达到最大重试次数"
-                echo "最后尝试使用 git 协议..."
                 git clone --verbose --depth 1 --branch v5.15.1 git://github.com/v2fly/v2ray-core.git && {
                   echo "使用 git 协议克隆成功"
                   cd v2ray-core
                   git status
                   git rev-parse HEAD
-                  
-                  # 对 git 协议克隆的仓库执行相同的验证
                   echo "验证关键文件和目录..."
                   required_files=("go.mod" "main/main.go" "app/router/config.proto")
                   required_dirs=("app" "common" "proxy" "transport")
-                  
                   for file in "${required_files[@]}"; do
                     if [ ! -f "$file" ]; then
                       echo "错误：缺少关键文件 $file"
                       exit 1
                     fi
                   done
-                  
                   for dir in "${required_dirs[@]}"; do
                     if [ ! -d "$dir" ]; then
                       echo "错误：缺少关键目录 $dir"
                       exit 1
                     fi
                   done
-                  
-                  # 检查文件权限
                   echo "检查文件权限..."
                   find . -type f -exec chmod 644 {} \;
                   find . -type d -exec chmod 755 {} \;
-                  
                   echo "所有验证通过"
                   cd ..
                   break
@@ -162,15 +139,11 @@ jobs:
               fi
             }
           done
-          
-          # 最终验证
           if [ ! -d "v2ray-core" ]; then
             echo "克隆验证失败：目录不存在"
             ls -la
             exit 1
           fi
-          
-          # 显示最终的目录结构
           echo "最终目录结构："
           ls -la v2ray-core/
 
@@ -192,7 +165,7 @@ jobs:
         run: |
           echo "ANDROID_NDK_HOME is $ANDROID_NDK_HOME"
           cd v2ray-core
-          gomobile bind -target android -androidapi 19 -o ../android/app/src/main/jniLibs/libv2ray.aar ./main
+          gomobile bind -target android -androidapi 19 -o ../android/app/src/main/jniLibs/libv2ray.aar github.com/v2fly/v2ray-core/v5
           unzip ../android/app/src/main/jniLibs/libv2ray.aar -d temp
           cp temp/jni/*/* ../android/app/src/main/jniLibs/
 
@@ -201,7 +174,7 @@ jobs:
         if: matrix.platform == 'ios'
         run: |
           cd v2ray-core
-          gomobile bind -target ios -o ../ios/Frameworks/V2ray.framework ./main
+          gomobile bind -target ios -o ../ios/Frameworks/V2ray.framework github.com/v2fly/v2ray-core/v5
           # 可选：生成静态库
           go build -buildmode=c-archive -o ../ios/Frameworks/libv2ray.a ./main
 
