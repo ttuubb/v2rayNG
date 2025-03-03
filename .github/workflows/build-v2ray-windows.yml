@@ -47,7 +47,8 @@ jobs:
           sudo apt update
           sudo apt install -y build-essential clang cmake pkg-config \
                               gcc g++ libgcc-13-dev \
-                              gcc-arm-linux-gnueabihf gcc-aarch64-linux-gnu
+                              gcc-arm-linux-gnueabihf gcc-aarch64-linux-gnu \
+                              mingw-w64-i686-dev mingw-w64-x86-64-dev
           wget -q https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
           unzip -q android-ndk-r25b-linux.zip
           echo "ANDROID_NDK_HOME=$(pwd)/android-ndk-r25b" >> $GITHUB_ENV
@@ -59,10 +60,16 @@ jobs:
             "windows-x86")
               echo "GOOS=windows" >> $GITHUB_ENV
               echo "GOARCH=386" >> $GITHUB_ENV
+              echo "CC=/usr/bin/i686-w64-mingw32-gcc" >> $GITHUB_ENV
+              echo "CGO_CFLAGS=-D_WIN32_WINNT=0x0600" >> $GITHUB_ENV
+              echo "CGO_LDFLAGS=-lws2_32 -luserenv -lshlwapi" >> $GITHUB_ENV
               ;;
             "windows-amd64")
               echo "GOOS=windows" >> $GITHUB_ENV
               echo "GOARCH=amd64" >> $GITHUB_ENV
+              echo "CC=/usr/bin/x86_64-w64-mingw32-gcc" >> $GITHUB_ENV
+              echo "CGO_CFLAGS=-D_WIN32_WINNT=0x0600" >> $GITHUB_ENV
+              echo "CGO_LDFLAGS=-lws2_32 -luserenv -lshlwapi" >> $GITHUB_ENV
               ;;
             "android-arm")
               echo "GOOS=android" >> $GITHUB_ENV
