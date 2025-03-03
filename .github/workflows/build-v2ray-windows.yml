@@ -3,11 +3,13 @@ name: Build v2ray-core/xray-core
 on:
   push:
     branches:
-      - master  # 监听 master 分支的推送
+      - master
   pull_request:
     branches:
       - master
-  workflow_dispatch:  # 允许手动触发
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 1'  # 每周一 00:00 UTC
 
 jobs:
   build:
@@ -18,21 +20,9 @@ jobs:
         include:
           - platform: windows-x86
             os: ubuntu-latest
-          # 暂时注释其他平台，专注于修复 windows-x86
+          # 可根据需要恢复其他平台
           # - platform: windows-amd64
           #   os: ubuntu-latest
-          # - platform: android-arm
-          #   os: ubuntu-latest
-          # - platform: android-arm64
-          #   os: ubuntu-latest
-          # - platform: android-x86
-          #   os: ubuntu-latest
-          # - platform: android-x86_64
-          #   os: ubuntu-latest
-          # - platform: ios-arm64
-          #   os: macos-latest
-          # - platform: ios-x86_64
-          #   os: macos-latest
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -40,7 +30,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'  # 适配 v2ray-core/xray-core
+          go-version: '1.21'
 
       - name: Install dependencies (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
@@ -49,10 +39,6 @@ jobs:
           sudo apt install -y build-essential clang cmake pkg-config \
                               gcc g++ libgcc-13-dev \
                               mingw-w64-i686-dev mingw-w64-x86-64-dev
-          # 暂时移除 Android NDK 以简化调试
-          # wget -q https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
-          # unzip -q android-ndk-r25b-linux.zip
-          # echo "ANDROID_NDK_HOME=$(pwd)/android-ndk-r25b" >> $GITHUB_ENV
 
       - name: Set environment variables
         run: |
@@ -61,22 +47,13 @@ jobs:
             "windows-x86")
               echo "GOOS=windows" >> $GITHUB_ENV
               echo "GOARCH=386" >> $GITHUB_ENV
-              echo "GO386=sse2" >> $GITHUB_ENV  # 强制 32 位模式
+              echo "GO386=sse2" >> $GITHUB_ENV
               echo "CC=/usr/bin/i686-w64-mingw32-gcc" >> $GITHUB_ENV
               echo "CXX=/usr/bin/i686-w64-mingw32-g++" >> $GITHUB_ENV
               echo "CGO_CFLAGS=-D_WIN32_WINNT=0x0600" >> $GITHUB_ENV
               echo "CGO_LDFLAGS=-lws2_32 -luserenv -lshlwapi" >> $GITHUB_ENV
               ;;
-            # 其他平台的配置暂时注释
           esac
-          # 输出环境变量以便调试
-          echo "CC=$CC"
-          echo "CXX=$CXX"
-          echo "GOOS=$GOOS"
-          echo "GOARCH=$GOARCH"
-          echo "GO386=$GO386"
-          echo "CGO_CFLAGS=$CGO_CFLAGS"
-          echo "CGO_LDFLAGS=$CGO_LDFLAGS"
 
       - name: Build v2ray-core/xray-core
         run: |
@@ -84,10 +61,42 @@ jobs:
           cd v2ray-core
           mkdir -p output
           go mod tidy
-          go build -v -o output/v2ray-${{ matrix.platform }} ./main  # 添加 -v 标志输出详细日志
+          go build -v -o output/v2ray-${{ matrix.platform }} ./main
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: v2ray-${{ matrix.platform }}
           path: v2ray-core/output/v2ray-*
+
+  release:
+    needs: build  # 依赖 build 作业完成
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'  # 仅在计划任务或手动触发时运行
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 默认提供的 token
+        with:
+          tag_name: "v${{ github.run_id }}-weekly"  # 使用运行 ID 生成唯一标签
+          release_name: "Weekly Release ${{ github.run_id }}"
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Assets
+        run: |
+          for artifact in artifacts/v2ray-*/*; do
+            gh release upload ${{ steps.create_release.outputs.id }} "$artifact" --clobber
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
