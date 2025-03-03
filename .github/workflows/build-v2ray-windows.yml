@@ -1,68 +1,57 @@
-name: Build V2Ray Windows Libraries
+name: Build v2ray-core/xray-core
 
 on:
-  workflow_dispatch:  # 允许手动触发
   push:
-    branches: [ Windows ]
-    paths:
-      - 'v2ray-core/**'  # 当 v2ray-core 目录有变化时触发
-  schedule:
-    - cron: '0 0 * * 0'  # 每周日自动构建一次
+    branches:
+      - main  # 监听 main 分支的推送
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:  # 允许手动触发
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
-    
+  build:
+    name: Build for ${{ matrix.platform }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [windows-x86, windows-amd64, android-arm, android-arm64, android-x86, android-x86_64, ios-arm64, ios-x86_64]
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-      
-      - name: Set up Go
-        uses: actions/setup-go@v4
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.20'  # 降级Go版本以兼容quic-go库
-      
-      - name: Get V2Ray Core Source
+          go-version: '1.21'  # 适配 v2ray-core/xray-core
+
+      - name: Install dependencies
         run: |
-          git clone https://github.com/v2fly/v2ray-core.git
-          cd v2ray-core
-          git checkout v5.7.0  # 指定版本，可以根据需要修改
-      
-      - name: Build V2Ray Core DLL
+          sudo apt update
+          sudo apt install -y build-essential clang cmake pkg-config
+
+      - name: Set environment variables
         run: |
+          case "${{ matrix.platform }}" in
+            "windows-x86")      echo "GOOS=windows" >> $GITHUB_ENV && echo "GOARCH=386" >> $GITHUB_ENV ;;
+            "windows-amd64")    echo "GOOS=windows" >> $GITHUB_ENV && echo "GOARCH=amd64" >> $GITHUB_ENV ;;
+            "android-arm")      echo "GOOS=android" >> $GITHUB_ENV && echo "GOARCH=arm" >> $GITHUB_ENV ;;
+            "android-arm64")    echo "GOOS=android" >> $GITHUB_ENV && echo "GOARCH=arm64" >> $GITHUB_ENV ;;
+            "android-x86")      echo "GOOS=android" >> $GITHUB_ENV && echo "GOARCH=386" >> $GITHUB_ENV ;;
+            "android-x86_64")   echo "GOOS=android" >> $GITHUB_ENV && echo "GOARCH=amd64" >> $GITHUB_ENV ;;
+            "ios-arm64")        echo "GOOS=ios" >> $GITHUB_ENV && echo "GOARCH=arm64" >> $GITHUB_ENV ;;
+            "ios-x86_64")       echo "GOOS=ios" >> $GITHUB_ENV && echo "GOARCH=amd64" >> $GITHUB_ENV ;;
+          esac
+
+      - name: Build v2ray-core/xray-core
+        run: |
+          git clone --depth 1 https://github.com/v2ray/v2ray-core.git
           cd v2ray-core
-          go env -w CGO_ENABLED=1
-          go env -w GOOS=windows
-          
-          # 设置MinGW环境
-          $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
-          
-          # 为 x86 构建
-          go env -w GOARCH=386
-          go env -w CC=gcc
-          go build -o ..\v2ray_x86.dll -buildmode=c-shared ./main
-          
-          # 为 x64 构建
-          go env -w GOARCH=amd64
-          go env -w CC=gcc
-          go build -o ..\v2ray_x64.dll -buildmode=c-shared ./main
-      
-      - name: Upload Windows Libraries
+          go mod tidy
+          go build -o output/v2ray-${{ matrix.platform }} ./main
+
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: v2ray-windows-libs
-          path: |
-            v2ray_x86.dll
-            v2ray_x64.dll
-      
-      - name: Create Release
-        if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: v2ray-libs-${{ github.run_number }}
-          name: V2Ray Windows Libraries ${{ github.run_number }}
-          files: |
-            v2ray_x86.dll
-            v2ray_x64.dll
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: v2ray-${{ matrix.platform }}
+          path: v2ray-core/output/v2ray-*
