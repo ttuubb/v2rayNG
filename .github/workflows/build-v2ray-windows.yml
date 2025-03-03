@@ -1,4 +1,4 @@
-name: Build V2rayNG Libraries
+name: Build V2rayNG Windows Library
 
 on:
   push:
@@ -13,22 +13,8 @@ on:
 
 jobs:
   build-libs:
-    name: Build Libraries for ${{ matrix.platform }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        platform: [android, ios, windows, macos, linux]
-        include:
-          - platform: android
-            os: ubuntu-latest
-          - platform: ios
-            os: macos-latest
-          - platform: windows
-            os: windows-latest
-          - platform: macos
-            os: macos-latest
-          - platform: linux
-            os: ubuntu-latest
+    name: Build Windows Library
+    runs-on: windows-latest
 
     steps:
       # 检出代码
@@ -40,40 +26,6 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.21' # 根据 v2ray-core/xray-core 要求调整
-
-      # 安装 Android NDK（仅限 Android 平台）
-      - name: Install Android NDK
-        if: matrix.platform == 'android'
-        run: |
-          wget -q https://dl.google.com/android/repository/android-ndk-r25c-linux.zip
-          unzip -q android-ndk-r25c-linux.zip -d $HOME/android-ndk
-          export ANDROID_NDK_HOME=$HOME/android-ndk/android-ndk-r25c
-          echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME" >> $GITHUB_ENV
-          ls -la $ANDROID_NDK_HOME/meta/ # 验证 meta 目录是否存在
-
-      # 安装依赖工具并初始化 gomobile
-      - name: Install Dependencies and Init Gomobile
-        run: |
-          # 设置 GOPATH
-          echo "GOPATH=$HOME/go" >> $GITHUB_ENV
-          echo "$HOME/go/bin" >> $GITHUB_PATH
-          
-          # 安装必要的依赖包
-          go get -d golang.org/x/mobile/cmd/gomobile
-          go get -d golang.org/x/mobile/bind
-          
-          # 使用 go install 安装 gomobile 和相关工具
-          go install golang.org/x/mobile/cmd/gomobile@latest
-          go install golang.org/x/tools/cmd/goimports@latest
-          
-          # 初始化 gomobile，确保所有工具链可用
-          gomobile init
-          
-          # 验证 gomobile 安装
-          gomobile version
-        env:
-          ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
-        if: matrix.platform == 'android' || matrix.platform == 'ios'
 
       # 拉取 v2ray-core/xray-core 源码
       - name: Clone v2ray-core/xray-core
@@ -162,70 +114,20 @@ jobs:
           ls -la v2ray-core/
 
       # 创建输出目录
-      - name: Create Output Directories
+      - name: Create Output Directory
         run: |
-          mkdir -p android/app/src/main/jniLibs/arm64-v8a
-          mkdir -p android/app/src/main/jniLibs/armeabi-v7a
-          mkdir -p android/app/src/main/jniLibs/x86
-          mkdir -p android/app/src/main/jniLibs/x86_64
-          mkdir -p ios/Frameworks
           mkdir -p windows
-          mkdir -p macos
-          mkdir -p linux
-
-      # 编译 Android 库
-      - name: Build Android Libraries
-        if: matrix.platform == 'android'
-        run: |
-          echo "ANDROID_NDK_HOME is $ANDROID_NDK_HOME"
-          cd v2ray-core
-          gomobile bind -target android -androidapi 19 -o ../android/app/src/main/jniLibs/libv2ray.aar github.com/v2fly/v2ray-core/v5
-          unzip ../android/app/src/main/jniLibs/libv2ray.aar -d temp
-          cp temp/jni/*/* ../android/app/src/main/jniLibs/
-
-      # 编译 iOS 库
-      - name: Build iOS Libraries
-        if: matrix.platform == 'ios'
-        run: |
-          cd v2ray-core
-          gomobile bind -target ios -o ../ios/Frameworks/V2ray.framework github.com/v2fly/v2ray-core/v5
-          # 可选：生成静态库
-          go build -buildmode=c-archive -o ../ios/Frameworks/libv2ray.a ./main
 
       # 编译 Windows 库
-      - name: Build Windows Libraries
-        if: matrix.platform == 'windows'
+      - name: Build Windows Library
         run: |
           cd v2ray-core
           go build -buildmode=c-shared -o ../windows/libv2ray.dll ./main
-
-      # 编译 macOS 库
-      - name: Build macOS Libraries
-        if: matrix.platform == 'macos'
-        run: |
-          cd v2ray-core
-          go build -buildmode=c-shared -o ../macos/libv2ray.dylib ./main
-          # 可选：生成静态库
-          go build -buildmode=c-archive -o ../macos/libv2ray.a ./main
-
-      # 编译 Linux 库
-      - name: Build Linux Libraries
-        if: matrix.platform == 'linux'
-        run: |
-          cd v2ray-core
-          go build -buildmode=c-shared -o ../linux/libv2ray.so ./main
-          # 可选：生成静态库
-          go build -buildmode=c-archive -o ../linux/libv2ray.a ./main
 
       # 上传构建产物
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.platform }}-libs
-          path: |
-            android/app/src/main/jniLibs/
-            ios/Frameworks/
-            windows/libv2ray.dll
-            macos/libv2ray.*
-            linux/libv2ray.*
+          name: windows-libs
+          path: windows/libv2ray.dll
           if-no-files-found: warn # 如果没有文件，仅警告而不失败
