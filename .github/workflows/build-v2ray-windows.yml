@@ -46,8 +46,8 @@ jobs:
         if: matrix.platform == 'android'
         run: |
           wget -q https://dl.google.com/android/repository/android-ndk-r25c-linux.zip
-          unzip -q android-ndk-r25c-linux.zip -d /usr/local/lib/android
-          export ANDROID_NDK_HOME=/usr/local/lib/android/android-ndk-r25c
+          unzip -q android-ndk-r25c-linux.zip -d $HOME/android-ndk
+          export ANDROID_NDK_HOME=$HOME/android-ndk/android-ndk-r25c
           echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME" >> $GITHUB_ENV
           ls -la $ANDROID_NDK_HOME/meta/ # 验证 meta 目录是否存在
 
