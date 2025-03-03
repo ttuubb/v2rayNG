@@ -29,15 +29,17 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y build-essential clang cmake pkg-config \
-                              gcc g++ libc6-dev libgcc-13-dev
+                              gcc g++ libc6-dev libgcc-13-dev \
+                              gcc-arm-linux-gnueabihf gcc-aarch64-linux-gnu
 
       - name: Set environment variables
         run: |
+          echo "CGO_ENABLED=1" >> $GITHUB_ENV
           case "${{ matrix.platform }}" in
             "windows-x86")      echo "GOOS=windows" >> $GITHUB_ENV && echo "GOARCH=386" >> $GITHUB_ENV ;;
             "windows-amd64")    echo "GOOS=windows" >> $GITHUB_ENV && echo "GOARCH=amd64" >> $GITHUB_ENV ;;
-            "android-arm")      echo "GOOS=android" >> $GITHUB_ENV && echo "GOARCH=arm" >> $GITHUB_ENV ;;
-            "android-arm64")    echo "GOOS=android" >> $GITHUB_ENV && echo "GOARCH=arm64" >> $GITHUB_ENV ;;
+            "android-arm")      echo "GOOS=android" >> $GITHUB_ENV && echo "GOARCH=arm" >> $GITHUB_ENV && echo "CC=arm-linux-gnueabihf-gcc" >> $GITHUB_ENV ;;
+            "android-arm64")    echo "GOOS=android" >> $GITHUB_ENV && echo "GOARCH=arm64" >> $GITHUB_ENV && echo "CC=aarch64-linux-gnu-gcc" >> $GITHUB_ENV ;;
             "android-x86")      echo "GOOS=android" >> $GITHUB_ENV && echo "GOARCH=386" >> $GITHUB_ENV ;;
             "android-x86_64")   echo "GOOS=android" >> $GITHUB_ENV && echo "GOARCH=amd64" >> $GITHUB_ENV ;;
             "ios-arm64")        echo "GOOS=ios" >> $GITHUB_ENV && echo "GOARCH=arm64" >> $GITHUB_ENV ;;
