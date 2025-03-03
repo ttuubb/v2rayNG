@@ -112,6 +112,7 @@ jobs:
               find . -type d -exec chmod 755 {} \;
               
               echo "所有验证通过"
+              cd ..
               break
             } || {
               echo "克隆失败，错误代码: $?"
@@ -152,6 +153,7 @@ jobs:
                   find . -type d -exec chmod 755 {} \;
                   
                   echo "所有验证通过"
+                  cd ..
                   break
                 } || {
                   echo "所有尝试都失败了"
@@ -162,8 +164,8 @@ jobs:
           done
           
           # 最终验证
-          if [ ! -d "v2ray-core" ] || [ ! -f "v2ray-core/go.mod" ]; then
-            echo "克隆验证失败：目录结构不完整"
+          if [ ! -d "v2ray-core" ]; then
+            echo "克隆验证失败：目录不存在"
             ls -la
             exit 1
           fi
