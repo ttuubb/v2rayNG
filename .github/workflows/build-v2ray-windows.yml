@@ -65,9 +65,29 @@ jobs:
       # 拉取 v2ray-core/xray-core 源码
       - name: Clone v2ray-core/xray-core
         run: |
-          git clone https://github.com/v2fly/v2ray-core.git
-          cd v2ray-core
-          git checkout v5.15.1 # 指定版本，可根据需要调整
+          # 添加重试机制和超时设置
+          for i in 1 2 3 4 5; do
+            echo "尝试克隆 v2ray-core 仓库，第 $i 次尝试..."
+            git clone --depth 1 --branch v5.15.1 https://github.com/v2fly/v2ray-core.git && break || {
+              if [ $i -lt 5 ]; then
+                echo "克隆失败，等待 30 秒后重试..."
+                sleep 30
+              else
+                echo "克隆失败，已达到最大重试次数"
+                exit 1
+              fi
+            }
+          done
+          
+          # 验证克隆是否成功
+          if [ -d "v2ray-core" ]; then
+            echo "v2ray-core 克隆成功"
+            cd v2ray-core
+            git status
+          else
+            echo "v2ray-core 目录不存在，克隆失败"
+            exit 1
+          fi
 
       # 创建输出目录
       - name: Create Output Directories
