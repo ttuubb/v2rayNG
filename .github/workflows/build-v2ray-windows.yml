@@ -18,20 +18,21 @@ jobs:
         include:
           - platform: windows-x86
             os: ubuntu-latest
-          - platform: windows-amd64
-            os: ubuntu-latest
-          - platform: android-arm
-            os: ubuntu-latest
-          - platform: android-arm64
-            os: ubuntu-latest
-          - platform: android-x86
-            os: ubuntu-latest
-          - platform: android-x86_64
-            os: ubuntu-latest
-          - platform: ios-arm64
-            os: macos-latest
-          - platform: ios-x86_64
-            os: macos-latest
+          # 暂时注释其他平台，专注于修复 windows-x86
+          # - platform: windows-amd64
+          #   os: ubuntu-latest
+          # - platform: android-arm
+          #   os: ubuntu-latest
+          # - platform: android-arm64
+          #   os: ubuntu-latest
+          # - platform: android-x86
+          #   os: ubuntu-latest
+          # - platform: android-x86_64
+          #   os: ubuntu-latest
+          # - platform: ios-arm64
+          #   os: macos-latest
+          # - platform: ios-x86_64
+          #   os: macos-latest
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -47,11 +48,11 @@ jobs:
           sudo apt update
           sudo apt install -y build-essential clang cmake pkg-config \
                               gcc g++ libgcc-13-dev \
-                              gcc-arm-linux-gnueabihf gcc-aarch64-linux-gnu \
                               mingw-w64-i686-dev mingw-w64-x86-64-dev
-          wget -q https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
-          unzip -q android-ndk-r25b-linux.zip
-          echo "ANDROID_NDK_HOME=$(pwd)/android-ndk-r25b" >> $GITHUB_ENV
+          # 暂时移除 Android NDK 以简化调试
+          # wget -q https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
+          # unzip -q android-ndk-r25b-linux.zip
+          # echo "ANDROID_NDK_HOME=$(pwd)/android-ndk-r25b" >> $GITHUB_ENV
 
       - name: Set environment variables
         run: |
@@ -60,46 +61,22 @@ jobs:
             "windows-x86")
               echo "GOOS=windows" >> $GITHUB_ENV
               echo "GOARCH=386" >> $GITHUB_ENV
+              echo "GO386=sse2" >> $GITHUB_ENV  # 强制 32 位模式
               echo "CC=/usr/bin/i686-w64-mingw32-gcc" >> $GITHUB_ENV
+              echo "CXX=/usr/bin/i686-w64-mingw32-g++" >> $GITHUB_ENV
               echo "CGO_CFLAGS=-D_WIN32_WINNT=0x0600" >> $GITHUB_ENV
               echo "CGO_LDFLAGS=-lws2_32 -luserenv -lshlwapi" >> $GITHUB_ENV
               ;;
-            "windows-amd64")
-              echo "GOOS=windows" >> $GITHUB_ENV
-              echo "GOARCH=amd64" >> $GITHUB_ENV
-              echo "CC=/usr/bin/x86_64-w64-mingw32-gcc" >> $GITHUB_ENV
-              echo "CGO_CFLAGS=-D_WIN32_WINNT=0x0600" >> $GITHUB_ENV
-              echo "CGO_LDFLAGS=-lws2_32 -luserenv -lshlwapi" >> $GITHUB_ENV
-              ;;
-            "android-arm")
-              echo "GOOS=android" >> $GITHUB_ENV
-              echo "GOARCH=arm" >> $GITHUB_ENV
-              echo "CC=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi21-clang" >> $GITHUB_ENV
-              ;;
-            "android-arm64")
-              echo "GOOS=android" >> $GITHUB_ENV
-              echo "GOARCH=arm64" >> $GITHUB_ENV
-              echo "CC=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang" >> $GITHUB_ENV
-              ;;
-            "android-x86")
-              echo "GOOS=android" >> $GITHUB_ENV
-              echo "GOARCH=386" >> $GITHUB_ENV
-              echo "CC=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang" >> $GITHUB_ENV
-              ;;
-            "android-x86_64")
-              echo "GOOS=android" >> $GITHUB_ENV
-              echo "GOARCH=amd64" >> $GITHUB_ENV
-              echo "CC=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang" >> $GITHUB_ENV
-              ;;
-            "ios-arm64")
-              echo "GOOS=ios" >> $GITHUB_ENV
-              echo "GOARCH=arm64" >> $GITHUB_ENV
-              ;;
-            "ios-x86_64")
-              echo "GOOS=ios" >> $GITHUB_ENV
-              echo "GOARCH=amd64" >> $GITHUB_ENV
-              ;;
+            # 其他平台的配置暂时注释
           esac
+          # 输出环境变量以便调试
+          echo "CC=$CC"
+          echo "CXX=$CXX"
+          echo "GOOS=$GOOS"
+          echo "GOARCH=$GOARCH"
+          echo "GO386=$GO386"
+          echo "CGO_CFLAGS=$CGO_CFLAGS"
+          echo "CGO_LDFLAGS=$CGO_LDFLAGS"
 
       - name: Build v2ray-core/xray-core
         run: |
@@ -107,7 +84,7 @@ jobs:
           cd v2ray-core
           mkdir -p output
           go mod tidy
-          go build -o output/v2ray-${{ matrix.platform }} ./main
+          go build -v -o output/v2ray-${{ matrix.platform }} ./main  # 添加 -v 标志输出详细日志
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
