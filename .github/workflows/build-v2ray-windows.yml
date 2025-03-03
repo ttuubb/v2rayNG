@@ -192,8 +192,7 @@ jobs:
         run: |
           echo "ANDROID_NDK_HOME is $ANDROID_NDK_HOME"
           cd v2ray-core
-          # 指定最低 API 级别为 19
-          ANDROID_MINSDKVERSION=19 gomobile bind -target android -o ../android/app/src/main/jniLibs/libv2ray.aar ./main
+          gomobile bind -target android -androidapi 19 -o ../android/app/src/main/jniLibs/libv2ray.aar ./main
           unzip ../android/app/src/main/jniLibs/libv2ray.aar -d temp
           cp temp/jni/*/* ../android/app/src/main/jniLibs/
 
