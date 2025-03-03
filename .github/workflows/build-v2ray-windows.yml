@@ -65,28 +65,52 @@ jobs:
       # 拉取 v2ray-core/xray-core 源码
       - name: Clone v2ray-core/xray-core
         shell: bash
+        env:
+          HTTPS_PROXY: ${{ secrets.HTTPS_PROXY }}
+          GIT_TRACE: 1
+          GIT_CURL_VERBOSE: 1
         run: |
+          # 清理可能存在的旧目录
+          rm -rf v2ray-core
+          
           # 添加重试机制和超时设置
           for i in 1 2 3 4 5; do
             echo "尝试克隆 v2ray-core 仓库，第 $i 次尝试..."
-            git clone --depth 1 --branch v5.15.1 https://github.com/v2fly/v2ray-core.git && break || {
+            echo "使用 git 版本: $(git --version)"
+            
+            # 使用 --verbose 显示更多克隆信息
+            git clone --verbose --depth 1 --branch v5.15.1 https://github.com/v2fly/v2ray-core.git && {
+              echo "v2ray-core 克隆成功"
+              cd v2ray-core
+              git status
+              git rev-parse HEAD
+              break
+            } || {
+              echo "克隆失败，错误代码: $?"
               if [ $i -lt 5 ]; then
-                echo "克隆失败，等待 30 秒后重试..."
-                sleep 30
+                echo "等待 60 秒后重试..."
+                sleep 60
               else
                 echo "克隆失败，已达到最大重试次数"
-                exit 1
+                echo "最后尝试使用 git 协议..."
+                git clone --verbose --depth 1 --branch v5.15.1 git://github.com/v2fly/v2ray-core.git && {
+                  echo "使用 git 协议克隆成功"
+                  cd v2ray-core
+                  git status
+                  git rev-parse HEAD
+                  break
+                } || {
+                  echo "所有尝试都失败了"
+                  exit 1
+                }
               fi
             }
           done
           
-          # 验证克隆是否成功
-          if [ -d "v2ray-core" ]; then
-            echo "v2ray-core 克隆成功"
-            cd v2ray-core
-            git status
-          else
-            echo "v2ray-core 目录不存在，克隆失败"
+          # 最终验证
+          if [ ! -d "v2ray-core" ] || [ ! -f "v2ray-core/go.mod" ]; then
+            echo "克隆验证失败：目录结构不完整"
+            ls -la
             exit 1
           fi
 
