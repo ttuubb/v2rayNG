@@ -42,11 +42,14 @@ jobs:
           go-version: '1.21' # 根据 v2ray-core/xray-core 要求调整
 
       # 安装 Android NDK（仅限 Android 平台）
-      - name: Set up Android NDK
+      - name: Install Android NDK
         if: matrix.platform == 'android'
-        uses: android-actions/setup-android@v3
-        with:
-          ndk-version: '25.1.8937393' # 使用支持 API 21-33 的 NDK 版本
+        run: |
+          wget -q https://dl.google.com/android/repository/android-ndk-r25c-linux.zip
+          unzip -q android-ndk-r25c-linux.zip -d /usr/local/lib/android
+          export ANDROID_NDK_HOME=/usr/local/lib/android/android-ndk-r25c
+          echo "ANDROID_NDK_HOME=$ANDROID_NDK_HOME" >> $GITHUB_ENV
+          ls -la $ANDROID_NDK_HOME/meta/ # 验证 meta 目录是否存在
 
       # 安装依赖工具
       - name: Install Dependencies
@@ -78,8 +81,7 @@ jobs:
       - name: Build Android Libraries
         if: matrix.platform == 'android'
         run: |
-          export ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.1.8937393
-          echo "ANDROID_NDK_HOME set to $ANDROID_NDK_HOME"
+          echo "ANDROID_NDK_HOME is $ANDROID_NDK_HOME"
           cd v2ray-core
           gomobile bind -target android -o ../android/app/src/main/jniLibs/libv2ray.aar ./main
           unzip ../android/app/src/main/jniLibs/libv2ray.aar -d temp
