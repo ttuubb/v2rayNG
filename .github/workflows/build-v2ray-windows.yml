@@ -28,7 +28,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y build-essential clang cmake pkg-config
+          sudo apt install -y build-essential clang cmake pkg-config \
+                              gcc g++ libc6-dev libgcc-13-dev
 
       - name: Set environment variables
         run: |
