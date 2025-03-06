@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/server_list_viewmodel.dart';
+import '../viewmodels/subscription_viewmodel.dart';
 import '../models/server_config.dart';
 import 'package:v2rayng/views/server_detail_page.dart';
 import 'subscription_page.dart';
@@ -41,6 +42,14 @@ class _ServerListPageState extends State<ServerListPage> {
                   builder: (context) => const SubscriptionPage(),
                 ),
               );
+            },
+          ),
+          // 刷新订阅按钮
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              Provider.of<SubscriptionViewModel>(context, listen: false)
+                  .refreshSubscriptions();
             },
           ),
           // 添加新服务器按钮
@@ -91,7 +100,8 @@ class _ServerListPageState extends State<ServerListPage> {
                     ),
                   );
                 },
-                onDelete: () => _showDeleteConfirmation(context, viewModel, server),
+                onDelete: () =>
+                    _showDeleteConfirmation(context, viewModel, server),
               );
             },
           );
@@ -102,7 +112,8 @@ class _ServerListPageState extends State<ServerListPage> {
 
   /// 显示删除确认对话框
   /// 提示用户确认是否要删除选中的服务器
-  void _showDeleteConfirmation(BuildContext context, ServerListViewModel viewModel, ServerConfig server) {
+  void _showDeleteConfirmation(BuildContext context,
+      ServerListViewModel viewModel, ServerConfig server) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -131,13 +142,13 @@ class _ServerListPageState extends State<ServerListPage> {
 class ServerListItem extends StatelessWidget {
   /// 服务器配置信息
   final ServerConfig server;
-  
+
   /// 切换服务器启用状态的回调函数
   final VoidCallback onToggle;
-  
+
   /// 编辑服务器配置的回调函数
   final VoidCallback onEdit;
-  
+
   /// 删除服务器的回调函数
   final VoidCallback onDelete;
 
@@ -162,20 +173,7 @@ class ServerListItem extends StatelessWidget {
         subtitle: Text('${server.protocol} - ${server.address}:${server.port}'),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
-          children: [
-            Switch(
-              value: server.enabled,
-              onChanged: (_) => onToggle(),
-            ),
-            IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: onEdit,
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: onDelete,
-            ),
-          ],
+          children: [],
         ),
       ),
     );

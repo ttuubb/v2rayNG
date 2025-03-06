@@ -26,7 +26,10 @@ class ServerConfig {
   
   /// 服务器延迟（毫秒），用于显示速度测试结果
   double? latency;
-
+  
+  /// 关联的订阅ID
+  final String? subscriptionId;
+  
   /// 构造函数
   /// [id] 可选，如果未提供则使用当前时间戳
   /// [name] 服务器名称，不能为空
@@ -36,6 +39,7 @@ class ServerConfig {
   /// [settings] 协议特定的设置
   /// [enabled] 是否启用，默认为true
   /// [latency] 服务器延迟
+  /// [subscriptionId] 关联的订阅ID
   ServerConfig({
     String? id,
     required this.name,
@@ -45,6 +49,7 @@ class ServerConfig {
     required this.settings,
     this.enabled = true,
     this.latency,
+    this.subscriptionId,
   }) : id = id ?? DateTime.now().millisecondsSinceEpoch.toString() {
     // 验证端口范围
     if (port < 1 || port > 65535) {
@@ -76,9 +81,9 @@ class ServerConfig {
       settings: json['settings'] ?? {},
       enabled: json['enabled'] ?? false,
       latency: json['latency'],
+      subscriptionId: json['subscriptionId'],
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -88,9 +93,9 @@ class ServerConfig {
       'protocol': protocol,
       'settings': settings,
       'enabled': enabled,
+      'subscriptionId': subscriptionId,
     };
   }
-
   String toV2rayConfig() {
     final config = {
       'inbounds': [

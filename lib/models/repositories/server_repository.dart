@@ -8,6 +8,10 @@ abstract class ServerRepositoryInterface {
   Future<void> addServer(ServerConfig server);
   Future<void> updateServer(ServerConfig server);
   Future<void> deleteServer(String serverId);
+  Future<List<ServerConfig>> getServersBySubscriptionId(String subscriptionId) async {
+    final servers = await getAllServers();
+    return servers.where((server) => server.subscriptionId == subscriptionId).toList();
+  }
 }
 
 class ServerRepository implements ServerRepositoryInterface {
@@ -66,6 +70,12 @@ class ServerRepository implements ServerRepositoryInterface {
     }
 
     await saveAllServers(servers);
+  }
+
+  @override
+  Future<List<ServerConfig>> getServersBySubscriptionId(String subscriptionId) async {
+    final servers = await getAllServers();
+    return servers.where((server) => server.subscriptionId == subscriptionId).toList();
   }
 
   @override

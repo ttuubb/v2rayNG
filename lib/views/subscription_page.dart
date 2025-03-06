@@ -67,13 +67,6 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 更新按钮
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: subscription.isUpdating
-                ? null
-                : () => viewModel.updateSubscription(subscription.id),
-          ),
           // 编辑按钮
           IconButton(
             icon: const Icon(Icons.edit),

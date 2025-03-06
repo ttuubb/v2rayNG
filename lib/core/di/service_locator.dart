@@ -13,6 +13,7 @@ import 'package:v2rayng/models/repositories/subscription_repository_impl.dart';
 import '../../models/repositories/server_repository.dart';
 import '../../viewmodels/server_list_viewmodel.dart';
 import '../../viewmodels/subscription_viewmodel.dart';
+import '../services/network_test_service.dart';
 
 final GetIt getIt = GetIt.instance;
 
@@ -45,5 +46,8 @@ class ServiceLocator {
     getIt.registerFactory<SubscriptionViewModel>(
       () => SubscriptionViewModel(getIt<SubscriptionRepository>()),
     );
+    
+    // 注册 NetworkTestService 单例
+    getIt.registerLazySingleton<NetworkTestService>(() => NetworkTestServiceImpl());
   }
 }
