@@ -17,17 +17,38 @@ class ServerListPage extends StatefulWidget {
 
 /// 服务器列表页面状态类
 /// 维护服务器列表的状态和用户交互逻辑
-class _ServerListPageState extends State<ServerListPage> {
+class _ServerListPageState extends State<ServerListPage> with AutomaticKeepAliveClientMixin {
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
     // 在微任务队列中加载服务器列表数据，避免在构建过程中调用setState
     Future.microtask(() =>
         Provider.of<ServerListViewModel>(context, listen: false).loadServers());
+    
+    // 添加滚动监听器
+    _scrollController.addListener(_onScroll);
   }
 
   @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    // 实现滚动防抖
+    if (!_scrollController.position.outOfRange) {
+      // 可以在这里添加滚动相关的优化逻辑
+    }
+  }
+
+  @override
+  bool get wantKeepAlive => true;
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('服务器列表'),
@@ -86,22 +107,28 @@ class _ServerListPageState extends State<ServerListPage> {
 
           // 使用ListView.builder高效构建服务器列表
           return ListView.builder(
+            controller: _scrollController,
             itemCount: viewModel.servers.length,
+            // 使用cacheExtent提高滚动性能
+            cacheExtent: 100.0,
             itemBuilder: (context, index) {
               final server = viewModel.servers[index];
-              return ServerListItem(
-                server: server,
-                onToggle: () => viewModel.toggleServerStatus(server),
-                onEdit: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ServerDetailPage(server: server),
-                    ),
-                  );
-                },
-                onDelete: () =>
-                    _showDeleteConfirmation(context, viewModel, server),
+              // 使用RepaintBoundary隔离重绘区域
+              return RepaintBoundary(
+                child: ServerListItem(
+                  server: server,
+                  onToggle: () => viewModel.toggleServerStatus(server),
+                  onEdit: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ServerDetailPage(server: server),
+                      ),
+                    );
+                  },
+                  onDelete: () =>
+                      _showDeleteConfirmation(context, viewModel, server),
+                ),
               );
             },
           );
@@ -126,7 +153,7 @@ class _ServerListPageState extends State<ServerListPage> {
           ),
           TextButton(
             onPressed: () {
-              viewModel.deleteServer(server.name);
+              viewModel.deleteServer(server.id);
               Navigator.pop(context);
             },
             child: const Text('删除'),

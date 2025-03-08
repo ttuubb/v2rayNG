@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'parsers/subscription_link_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../subscription.dart';
@@ -18,7 +19,7 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
   final http.Client _httpClient;
 
   // 预初始化解析器列表，避免每次解析订阅内容时都创建新实例
-  final List<dynamic> _parsers = [
+  final List<SubscriptionLinkParser> _parsers = [
     VmessLinkParser(),
     VlessLinkParser(),
     ShadowsocksLinkParser(),
@@ -120,7 +121,8 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
               existingServer = existingServers.firstWhere((s) =>
                   s.address == config.address &&
                   s.port == config.port &&
-                  s.protocol == config.protocol);
+                  s.protocol == config.protocol &&
+                  _mapEquals(s.settings, config.settings));
             } catch (e) {
               // 如果找不到匹配的服务器配置，existingServer将保持为null
               existingServer = null;
@@ -146,12 +148,13 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
         await updateSubscription(updatedSubscription);
       } else {
         throw Exception(
-            'Failed to update subscription: ${response.statusCode}');
+            'Failed to update subscription: ${response.statusCode} - ${response.body}');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       final updatedSubscription =
           subscription.copyWith(lastError: e.toString(), isUpdating: false);
       await updateSubscription(updatedSubscription);
+      print('更新订阅 ${subscription.name} 失败: ${e.toString()}\nStackTrace: ${stackTrace.toString()}');
       rethrow;
     }
   }
@@ -263,6 +266,19 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
     await _prefs.setString(_subscriptionKey, data);
   }
 
+  // 比较两个Map是否相等
+  bool _mapEquals(Map? a, Map? b) {
+    if (a == null && b == null) return true;
+    if (a == null || b == null) return false;
+    if (a.length != b.length) return false;
+    for (final key in a.keys) {
+      if (!b.containsKey(key) || a[key] != b[key]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   /// 解析订阅内容，生成服务器配置列表
   ///
   /// [content] 订阅内容，可能是Base64编码的文本或普通文本
@@ -290,6 +306,14 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
     for (final line in lines) {
       final trimmedLine = line.trim();
       if (trimmedLine.isEmpty) continue;
+
+      // 检查是否是有效的URL
+      final urlRegex = RegExp(r'^(https?|ss|vmess|vless|trojan)://.+');
+      if (!urlRegex.hasMatch(trimmedLine)) {
+        print('无效的URL: $trimmedLine');
+        failCount++;
+        continue;
+      }
 
       bool parsed = false;
       try {

@@ -14,6 +14,8 @@ import '../../models/repositories/server_repository.dart';
 import '../../viewmodels/server_list_viewmodel.dart';
 import '../../viewmodels/subscription_viewmodel.dart';
 import '../services/network_test_service.dart';
+import '../services/theme_service.dart';
+import '../services/localization_service.dart';
 
 final GetIt getIt = GetIt.instance;
 
@@ -22,7 +24,7 @@ class ServiceLocator {
   static Future<void> init() async {
     // 获取 SharedPreferences 实例，用于持久化存储
     final prefs = await SharedPreferences.getInstance();
-    
+
     // 创建HTTP客户端实例
     final httpClient = http.Client();
 
@@ -33,9 +35,8 @@ class ServiceLocator {
     // 注册 SubscriptionRepository 单例
     // SubscriptionRepository 负责管理订阅相关数据
     getIt.registerSingleton<SubscriptionRepository>(
-      SubscriptionRepositoryImpl(prefs, httpClient)
-    );
-    
+        SubscriptionRepositoryImpl(prefs, httpClient));
+
     // 注册 ServerListViewModel 工厂方法
     // ServerListViewModel 是视图模型，负责为服务器列表页面提供业务逻辑
     getIt.registerFactory<ServerListViewModel>(
@@ -46,8 +47,18 @@ class ServiceLocator {
     getIt.registerFactory<SubscriptionViewModel>(
       () => SubscriptionViewModel(getIt<SubscriptionRepository>()),
     );
-    
+
     // 注册 NetworkTestService 单例
-    getIt.registerLazySingleton<NetworkTestService>(() => NetworkTestServiceImpl());
+    getIt.registerLazySingleton<NetworkTestService>(
+        () => NetworkTestServiceImpl());
+
+    // 注册主题服务单例
+    // ThemeService 负责管理应用的主题设置，包括深色模式支持
+    getIt.registerLazySingleton<ThemeService>(() => ThemeService(prefs));
+
+    // 注册国际化服务单例
+    // LocalizationService 负责管理应用的多语言支持
+    getIt.registerLazySingleton<LocalizationService>(
+        () => LocalizationService(prefs));
   }
 }
