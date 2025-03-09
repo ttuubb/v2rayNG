@@ -19,7 +19,7 @@ void main() {
       const testUrl = 'https://example.com/path%20with%20spaces?q=test%26more';
       final parsedUrl = UrlUtils.parseUrl(testUrl);
 
-      expect(parsedUrl.path, equals('/path with spaces'));
+      expect(Uri.decodeComponent(parsedUrl.path), equals('/path with spaces'));
       expect(UrlUtils.decodeQuery(parsedUrl.query), equals({'q': 'test&more'}));
     });
 

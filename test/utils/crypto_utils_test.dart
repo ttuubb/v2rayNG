@@ -60,7 +60,7 @@ void main() {
     test('密码强度验证测试', () {
       const weakPassword = '12345678';
       const mediumPassword = 'Test123!';
-      const strongPassword = 'Test123!@#$%^&*';
+      const strongPassword = 'Test123!@#\$%^&*';
       
       expect(CryptoUtils.checkPasswordStrength(weakPassword), equals('weak'));
       expect(CryptoUtils.checkPasswordStrength(mediumPassword), equals('medium'));

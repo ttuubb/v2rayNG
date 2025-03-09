@@ -2,17 +2,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:v2rayng/services/subscription_service.dart';
 import 'package:v2rayng/models/subscription_model.dart';
 import 'package:mockito/mockito.dart';
+import 'package:mockito/annotations.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:typed_data';
+import 'subscription_service_test.mocks.dart';
 
-class MockHttpClient extends Mock implements http.Client {}
-
+@GenerateMocks([http.Client])
 void main() {
   group('SubscriptionService Tests', () {
     late SubscriptionService subscriptionService;
-    late MockHttpClient mockHttpClient;
+    late MockClient mockHttpClient;
 
     setUp(() {
-      mockHttpClient = MockHttpClient();
+      mockHttpClient = MockClient();
       subscriptionService = SubscriptionService(httpClient: mockHttpClient);
     });
 
@@ -20,7 +23,7 @@ void main() {
       final subscription = SubscriptionModel(
         name: 'Test Sub',
         url: 'https://example.com/sub',
-        lastUpdated: DateTime.now(),
+        lastUpdate: DateTime.now(),
       );
 
       final mockResponse = http.Response(
@@ -40,7 +43,7 @@ void main() {
       final subscription = SubscriptionModel(
         name: 'Test Sub',
         url: 'https://example.com/sub',
-        lastUpdated: DateTime.now(),
+        lastUpdate: DateTime.now(),
       );
 
       when(mockHttpClient.get(Uri.parse(subscription.url)))
@@ -55,7 +58,7 @@ void main() {
       final subscription = SubscriptionModel(
         name: 'Test Sub',
         url: 'https://example.com/sub',
-        lastUpdated: DateTime.now(),
+        lastUpdate: DateTime.now(),
       );
 
       final mockResponse = http.Response(
@@ -75,7 +78,7 @@ void main() {
       final subscription = SubscriptionModel(
         name: 'Test Sub',
         url: 'https://example.com/sub',
-        lastUpdated: DateTime.now(),
+        lastUpdate: DateTime.now(),
       );
 
       final mockResponse = http.Response(
