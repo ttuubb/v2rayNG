@@ -30,7 +30,7 @@ class ServerListViewModel extends ChangeNotifier {
   static const Duration _cacheExpiration = Duration(minutes: 30);
 
   /// 最后一次缓存更新时间
-  DateTime _lastCacheUpdate = DateTime.now();
+  DateTime _lastCacheUpdate = DateTime.fromMicrosecondsSinceEpoch(0); // 初始化为过去的时间，确保第一次总是加载
 
   /// 构造函数
   /// [_repository] 服务器仓库实例
@@ -73,12 +73,29 @@ class ServerListViewModel extends ChangeNotifier {
     }
   }
 
+  /// 强制刷新服务器列表（忽略缓存）
+  Future<void> forceRefreshServers() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _servers = await _repository.getAllServers();
+      _lastCacheUpdate = DateTime.now();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   /// 添加新服务器
   /// [server] 要添加的服务器配置
   Future<void> addServer(ServerConfig server) async {
     try {
       await _repository.addServer(server);
-      await loadServers();
+      await forceRefreshServers(); // 使用强制刷新
     } catch (e) {
       _error = e.toString();
       notifyListeners();
@@ -89,7 +106,7 @@ class ServerListViewModel extends ChangeNotifier {
   Future<void> saveServer(ServerConfig server) async {
     try {
       await _repository.saveServer(server);
-      await loadServers();
+      await forceRefreshServers(); // 使用强制刷新
     } catch (e) {
       _error = e.toString();
       notifyListeners();
@@ -101,7 +118,7 @@ class ServerListViewModel extends ChangeNotifier {
     try {
       final updatedServer = server.copyWith(id: serverId);
       await _repository.updateServer(updatedServer);
-      await loadServers();
+      await forceRefreshServers(); // 使用强制刷新
     } catch (e) {
       _error = e.toString();
       notifyListeners();
@@ -125,7 +142,7 @@ class ServerListViewModel extends ChangeNotifier {
         );
 
         await _repository.updateServer(updatedServer);
-        await loadServers();
+        await forceRefreshServers(); // 使用强制刷新
         notifyListeners();
       } catch (e) {
         _error = e.toString();
@@ -137,7 +154,7 @@ class ServerListViewModel extends ChangeNotifier {
   Future<void> deleteServer(String serverId) async {
     try {
       await _repository.deleteServer(serverId);
-      await loadServers();
+      await forceRefreshServers(); // 使用强制刷新
     } catch (e) {
       _error = e.toString();
       notifyListeners();
@@ -150,7 +167,7 @@ class ServerListViewModel extends ChangeNotifier {
       for (final id in serverIds) {
         await _repository.deleteServer(id);
       }
-      await loadServers();
+      await forceRefreshServers(); // 使用强制刷新
     } catch (e) {
       _error = e.toString();
       notifyListeners();
@@ -163,7 +180,7 @@ class ServerListViewModel extends ChangeNotifier {
       for (final server in servers) {
         await _repository.addServer(server);
       }
-      await loadServers();
+      await forceRefreshServers(); // 使用强制刷新
       notifyListeners(); // 确保批量操作后通知监听器
     } catch (e) {
       _error = e.toString();
