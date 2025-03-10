@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:v2rayng/viewmodels/server_list_viewmodel.dart';
-import 'package:v2rayng/models/config_model.dart';
 import 'package:v2rayng/models/repositories/server_repository.dart';
 import 'package:v2rayng/models/server_config.dart';
 import 'package:mockito/mockito.dart';

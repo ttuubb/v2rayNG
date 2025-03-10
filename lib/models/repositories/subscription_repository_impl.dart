@@ -16,7 +16,6 @@ import 'parsers/trojan_link_parser.dart';
 class SubscriptionRepositoryImpl implements SubscriptionRepository {
   final SharedPreferences _prefs;
   final String _subscriptionKey = 'subscriptions';
-  final http.Client _httpClient;
 
   // 预初始化解析器列表，避免每次解析订阅内容时都创建新实例
   final List<SubscriptionLinkParser> _parsers = [
@@ -26,7 +25,7 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
     TrojanLinkParser(),
   ];
 
-  SubscriptionRepositoryImpl(this._prefs, this._httpClient);
+  SubscriptionRepositoryImpl(this._prefs);
 
   // 获取所有订阅信息
   @override
@@ -93,16 +92,34 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
     if (subscription == null) return;
 
     try {
-      // 获取ServerRepository实例
       final serverRepository = getIt<ServerRepository>();
-
-      // 获取当前订阅下的所有服务器
       final currentServers =
           await serverRepository.getServersBySubscriptionId(subscription.id);
 
-      final response = await _httpClient.get(Uri.parse(subscription.url));
+      // 设置超时时间为30秒，并添加重试机制
+      final client = http.Client();
+      var response;
+      var retryCount = 3;
+      var retryDelay = const Duration(seconds: 1);
+
+      while (retryCount > 0) {
+        try {
+          response = await client
+              .get(Uri.parse(subscription.url))
+              .timeout(const Duration(seconds: 30));
+          break;
+        } catch (e) {
+          retryCount--;
+          if (retryCount > 0) {
+            await Future.delayed(retryDelay);
+            retryDelay *= 2; // 指数退避
+          } else {
+            rethrow;
+          }
+        }
+      }
+
       if (response.statusCode == 200) {
-        // 解析订阅内容，生成服务器配置列表
         final serverConfigs = await _parseSubscriptionContent(response.body);
 
         // 清除该订阅下的所有旧节点
@@ -112,23 +129,26 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
 
         // 获取所有现有服务器用于去重
         final existingServers = await serverRepository.getAllServers();
+        final addedConfigs = <String>{}; // 用于跟踪已添加的配置
 
         for (final config in serverConfigs) {
           try {
-            // 检查是否存在相同的服务器配置
-            ServerConfig? existingServer;
-            try {
-              existingServer = existingServers.firstWhere((s) =>
-                  s.address == config.address &&
-                  s.port == config.port &&
-                  s.protocol == config.protocol &&
-                  _mapEquals(s.settings, config.settings));
-            } catch (e) {
-              // 如果找不到匹配的服务器配置，existingServer将保持为null
-              existingServer = null;
+            // 生成配置的唯一标识
+            final configKey = _generateConfigKey(config);
+
+            // 检查是否已经添加过相同的配置
+            if (addedConfigs.contains(configKey)) {
+              print('跳过重复的服务器配置');
+              continue;
             }
 
-            if (existingServer != null) {
+            // 检查是否存在相同的服务器配置
+            final existingServer = existingServers.firstWhere(
+              (s) => _generateConfigKey(s) == configKey,
+              orElse: () => ServerConfig.empty(),
+            );
+
+            if (existingServer.id.isNotEmpty) {
               // 如果存在相同配置，则更新现有配置
               final updatedConfig = config.copyWith(id: existingServer.id);
               await serverRepository.updateServer(updatedConfig);
@@ -136,27 +156,43 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
               // 如果不存在相同配置，则添加新配置
               await serverRepository.addServer(config);
             }
+
+            // 记录已添加的配置
+            addedConfigs.add(configKey);
           } catch (e) {
-            // 记录错误但继续处理其他配置
             print('处理服务器配置失败: ${e.toString()}');
           }
         }
 
         // 更新订阅状态
         final updatedSubscription = subscription.copyWith(
-            lastUpdateTime: DateTime.now(), lastError: null, isUpdating: false);
+          lastUpdateTime: DateTime.now(),
+          lastError: null,
+          isUpdating: false,
+        );
         await updateSubscription(updatedSubscription);
       } else {
         throw Exception(
-            'Failed to update subscription: ${response.statusCode} - ${response.body}');
+          'Failed to update subscription: ${response.statusCode} - ${response.body}',
+        );
       }
     } catch (e, stackTrace) {
-      final updatedSubscription =
-          subscription.copyWith(lastError: e.toString(), isUpdating: false);
+      final updatedSubscription = subscription.copyWith(
+        lastError: e.toString(),
+        isUpdating: false,
+      );
       await updateSubscription(updatedSubscription);
-      print('更新订阅 ${subscription.name} 失败: ${e.toString()}\nStackTrace: ${stackTrace.toString()}');
+      print(
+        '更新订阅 ${subscription.name} 失败: ${e.toString()}\nStackTrace: ${stackTrace.toString()}',
+      );
       rethrow;
     }
+  }
+
+  // 生成服务器配置的唯一标识
+  String _generateConfigKey(ServerConfig config) {
+    return '${config.protocol}://${config.address}:${config.port}'
+        '${config.settings.entries.map((e) => '${e.key}=${e.value}').join(',')}';
   }
 
   // 导入订阅信息
@@ -185,19 +221,10 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
     final subscriptions = await getAllSubscriptions();
     for (final subscription in subscriptions) {
       try {
-        // 更新订阅状态为正在更新
-        final updatingSubscription = subscription.copyWith(isUpdating: true);
-        await updateSubscription(updatingSubscription);
-
         await updateSubscriptionContent(subscription.id);
       } catch (e) {
-        print('刷新订阅${subscription.name}失败: ${e.toString()}');
-        // 更新订阅错误状态
-        final failedSubscription = subscription.copyWith(
-          isUpdating: false,
-          lastError: e.toString(),
-        );
-        await updateSubscription(failedSubscription);
+        // 继续处理下一个订阅，即使当前订阅更新失败
+        continue;
       }
     }
   }
@@ -264,19 +291,6 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
     final String data =
         json.encode(subscriptions.map((sub) => sub.toJson()).toList());
     await _prefs.setString(_subscriptionKey, data);
-  }
-
-  // 比较两个Map是否相等
-  bool _mapEquals(Map? a, Map? b) {
-    if (a == null && b == null) return true;
-    if (a == null || b == null) return false;
-    if (a.length != b.length) return false;
-    for (final key in a.keys) {
-      if (!b.containsKey(key) || a[key] != b[key]) {
-        return false;
-      }
-    }
-    return true;
   }
 
   /// 解析订阅内容，生成服务器配置列表

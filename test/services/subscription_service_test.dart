@@ -4,8 +4,6 @@ import 'package:v2rayng/models/subscription_model.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'dart:typed_data';
 import 'subscription_service_test.mocks.dart';
 
 @GenerateMocks([http.Client])

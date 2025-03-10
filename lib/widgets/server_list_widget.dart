@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:v2rayng/models/server_list_view_model.dart';
-import 'package:v2rayng/models/config_model.dart';
 
 /// 服务器列表组件
 /// 用于显示服务器列表，支持加载状态、错误状态和空列表状态

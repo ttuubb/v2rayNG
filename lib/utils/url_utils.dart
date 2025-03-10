@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 /// URL工具类
 /// 提供URL解析、编码解码、查询参数处理等功能
 class UrlUtils {

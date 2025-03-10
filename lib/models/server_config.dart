@@ -84,6 +84,20 @@ class ServerConfig {
       subscriptionId: json['subscriptionId'],
     );
   }
+  
+  /// 创建一个空的服务器配置实例
+  factory ServerConfig.empty() {
+    return ServerConfig(
+      id: '',
+      name: '',
+      address: '',
+      port: 1,
+      protocol: '',
+      settings: {},
+      enabled: false,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

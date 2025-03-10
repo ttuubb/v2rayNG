@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:mockito/mockito.dart';
 import 'package:v2rayng/services/http_service.dart';
-import 'dart:async';
 
 // 手动创建Mock类，不使用自动生成
 class MockHttpClient extends Mock implements http.Client {}

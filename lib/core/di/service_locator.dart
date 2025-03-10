@@ -7,7 +7,6 @@
 
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
 import 'package:v2rayng/models/repositories/subscription_repository.dart';
 import 'package:v2rayng/models/repositories/subscription_repository_impl.dart';
 import '../../models/repositories/server_repository.dart';
@@ -25,9 +24,6 @@ class ServiceLocator {
     // 获取 SharedPreferences 实例，用于持久化存储
     final prefs = await SharedPreferences.getInstance();
 
-    // 创建HTTP客户端实例
-    final httpClient = http.Client();
-
     // 注册 ServerRepository 单例
     // ServerRepository 是核心的数据仓库，负责管理服务器相关数据
     getIt.registerSingleton<ServerRepository>(ServerRepository(prefs));
@@ -35,7 +31,7 @@ class ServiceLocator {
     // 注册 SubscriptionRepository 单例
     // SubscriptionRepository 负责管理订阅相关数据
     getIt.registerSingleton<SubscriptionRepository>(
-        SubscriptionRepositoryImpl(prefs, httpClient));
+        SubscriptionRepositoryImpl(prefs));
 
     // 注册 ServerListViewModel 工厂方法
     // ServerListViewModel 是视图模型，负责为服务器列表页面提供业务逻辑

@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class SubscriptionModel {
   final String name;
   final String url;
